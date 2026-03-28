@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRASHFIRE - AI Code Review Benchmark</title>
+  <meta name="description" content="How well can AI find bugs? 42 vulnerable apps, 4200+ planted issues, 30+ languages.">
+  <meta property="og:title" content="TRASHFIRE - AI Code Review Benchmark">
+  <meta property="og:description" content="42 vulnerable apps. 4200+ planted issues. 30+ languages. How well can AI actually review code?">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://trashfire.io">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+  <style>
+    :root{--bg:#09090b;--s:#18181b;--s2:#27272a;--b:#3f3f46;--t:#fafafa;--m:#a1a1aa;--o:#f97316;--o2:#fb923c;--g:#22c55e;--r:#ef4444;--y:#eab308}
+    *{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t);line-height:1.5;font-size:14px}
+    a{color:var(--o);text-decoration:none}a:hover{text-decoration:underline}
+
+    .hero{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(249,115,22,0.1) 0%,transparent 60%)}
+    .badge{display:inline-flex;align-items:center;gap:.4rem;background:var(--s);border:1px solid var(--b);border-radius:999px;padding:.35rem .9rem;font-size:.8rem;color:var(--m);margin-bottom:1.5rem;position:relative}
+    .badge .dot{width:6px;height:6px;background:var(--g);border-radius:50%}
+    h1{font-size:clamp(3rem,8vw,5.5rem);font-weight:800;letter-spacing:-.03em;line-height:1;position:relative}
+    h1 em{color:var(--o);font-style:normal}
+    .tagline{font-size:clamp(1rem,2vw,1.3rem);color:var(--m);max-width:520px;margin:1.2rem auto 2rem;position:relative}
+    .nums{display:flex;gap:1px;background:var(--b);border-radius:12px;overflow:hidden;position:relative;margin-bottom:2rem}
+    .num{background:var(--s);padding:1rem 1.8rem;text-align:center}
+    .num b{display:block;font-size:1.5rem;color:var(--o)}
+    .num small{font-size:.65rem;color:var(--m);text-transform:uppercase;letter-spacing:.08em}
+    .btns{display:flex;gap:.75rem;position:relative;flex-wrap:wrap;justify-content:center}
+    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.65rem 1.5rem;border-radius:8px;font-size:.9rem;font-weight:600;text-decoration:none;transition:all .15s}
+    .btn-p{background:var(--o);color:#fff}.btn-p:hover{background:var(--o2);text-decoration:none}
+    .btn-s{background:var(--s);color:var(--t);border:1px solid var(--b)}.btn-s:hover{border-color:var(--m);text-decoration:none}
+
+    section{max-width:1200px;margin:0 auto;padding:4rem 1.5rem}
+    h2{font-size:1.6rem;font-weight:700;margin-bottom:.3rem}
+    .sub{color:var(--m);margin-bottom:2rem}
+
+    /* Terminal */
+    .term{background:#0a0a0a;border:1px solid var(--b);border-radius:12px;overflow:hidden;max-width:680px;margin:0 auto}
+    .term-bar{display:flex;align-items:center;gap:5px;padding:10px 14px;background:#151515;border-bottom:1px solid var(--b)}
+    .term-bar i{width:9px;height:9px;border-radius:50%}.term-bar .r{background:#ff5f57}.term-bar .y{background:#febc2e}.term-bar .g{background:#28c840}
+    .term-bar span{margin-left:6px;font-size:.7rem;color:#555;font-family:monospace}
+    .term-body{padding:1.2rem;font-family:'SF Mono','Fira Code',monospace;font-size:.8rem;line-height:1.8}
+    .term-body .l{opacity:0;animation:tl .3s forwards;white-space:nowrap;overflow:hidden}
+    .term-body .p{color:var(--g)}.term-body .c{color:var(--t)}.term-body .f{color:var(--o)}
+    .term-body .x{color:#555;font-style:italic}.term-body .o{color:var(--m)}.term-body .ok{color:var(--g)}
+    .term-body .big{color:var(--o);font-weight:700;font-size:.95rem}.term-body .d{color:#333}
+    .term-body .sp{height:.4rem}
+    @keyframes tl{from{opacity:0;max-width:0}to{opacity:1;max-width:100%}}
+    .l:nth-child(1){animation-delay:.2s}.l:nth-child(2){animation-delay:.5s}.l:nth-child(3){animation-delay:.9s}
+    .l:nth-child(4){animation-delay:1.3s}.l:nth-child(5){animation-delay:1.6s}.l:nth-child(6){animation-delay:1.8s}
+    .l:nth-child(7){animation-delay:2.2s}.l:nth-child(8){animation-delay:2.7s}.l:nth-child(9){animation-delay:3.1s}
+    .l:nth-child(10){animation-delay:3.5s}.l:nth-child(11){animation-delay:3.9s}.l:nth-child(12){animation-delay:4.3s}
+    .l:nth-child(13){animation-delay:4.5s}.l:nth-child(14){animation-delay:5s}.l:nth-child(15){animation-delay:5.3s}
+    .l:nth-child(16){animation-delay:5.7s}.l:nth-child(17){animation-delay:6s}.l:nth-child(18){animation-delay:6.3s}
+    .l:nth-child(19){animation-delay:6.6s}.l:nth-child(20){animation-delay:6.9s}.l:nth-child(21){animation-delay:7.1s}
+
+    /* Leaderboard table */
+    .lb{border:1px solid var(--b);border-radius:12px;overflow:hidden;background:var(--s)}
+    .lb table{width:100%;border-collapse:collapse}
+    .lb th{text-align:left;padding:.6rem .7rem;font-size:.65rem;font-weight:600;color:var(--m);text-transform:uppercase;letter-spacing:.06em;background:#111;border-bottom:1px solid var(--b);white-space:nowrap}
+    .lb th.r{text-align:right}
+    .lb td{padding:.55rem .7rem;border-bottom:1px solid rgba(63,63,70,.3);font-size:.82rem;vertical-align:middle;white-space:nowrap}
+    .lb tr:last-child td{border-bottom:none}
+    .lb tr:hover{background:rgba(249,115,22,.03)}
+    .lb .rk{font-size:1.1rem;font-weight:800;text-align:center;width:36px;color:var(--m)}
+    .lb tr:nth-child(1) .rk{color:var(--o)}.lb tr:nth-child(2) .rk{color:var(--o2)}.lb tr:nth-child(3) .rk{color:var(--y)}
+    .lb .mn{font-weight:600}.lb .mp{font-size:.72rem;color:var(--m)}
+    .lb .sc{font-weight:700;color:var(--g);font-size:.95rem;text-align:right}
+    .lb .r{text-align:right;font-variant-numeric:tabular-nums}
+    .tag{display:inline-block;padding:.1rem .45rem;border-radius:4px;font-size:.65rem;font-weight:600}
+    .tag-pr{background:var(--s2);color:var(--m);border:1px solid var(--b)}
+    .tag-sk{background:rgba(34,197,94,.1);color:var(--g);border:1px solid rgba(34,197,94,.2)}
+
+    /* Inline category bar */
+    .cb{display:inline-flex;align-items:center;gap:4px;min-width:65px}
+    .cb-bar{width:36px;height:5px;background:var(--s2);border-radius:2px;overflow:hidden}
+    .cb-fill{height:100%;border-radius:2px}
+    .cb-v{font-size:.75rem;font-weight:600;font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
+
+    /* Found column */
+    .fd{display:flex;align-items:center;gap:5px}
+    .fd-bar{width:40px;height:5px;background:var(--s2);border-radius:2px;overflow:hidden}
+    .fd-fill{height:100%;background:var(--g);border-radius:2px}
+
+    /* Categories section */
+    .cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:.75rem}
+    .cat{display:flex;align-items:center;gap:.8rem;background:var(--s);border:1px solid var(--b);border-radius:10px;padding:1rem}
+    .cat-w{font-size:1.3rem;font-weight:800;color:var(--o);min-width:45px;text-align:right}
+    .cat-n{font-weight:600;font-size:.88rem}.cat-d{color:var(--m);font-size:.78rem}
+
+    /* Projects */
+    .pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.5rem}
+    .pc{background:var(--s);border:1px solid var(--b);border-radius:8px;padding:.6rem .9rem;font-size:.82rem;transition:border-color .15s}
+    .pc:hover{border-color:var(--o)}
+    .pc b{font-weight:600}.pc small{color:var(--m);font-size:.75rem;margin-left:.3rem}
+
+    footer{text-align:center;padding:2.5rem 1.5rem;color:var(--m);font-size:.8rem;border-top:1px solid var(--b);margin-top:1rem}
+    .warn{max-width:650px;margin:0 auto 1.2rem;padding:.8rem 1.2rem;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:8px;font-size:.78rem;color:var(--m);text-align:left}
+    .warn strong{color:var(--r)}
+
+    @media(max-width:640px){.nums{flex-direction:column}.lb{overflow-x:auto}.lb table{min-width:700px}section{padding:2.5rem 1rem}}
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="badge"><span class="dot"></span> Open-source benchmark</div>
+  <h1><em>TRASH</em>FIRE</h1>
+  <p class="tagline">The AI code review benchmark your LLM doesn't want to see.</p>
+  <div class="nums">
+    <div class="num"><b>42</b><small>Projects</small></div>
+    <div class="num"><b>4,200+</b><small>Planted Issues</small></div>
+    <div class="num"><b>30+</b><small>Languages</small></div>
+    <div class="num"><b id="rc">-</b><small>Runs</small></div>
+  </div>
+  <div class="btns">
+    <a href="https://github.com/ktdmax/trashfire" class="btn btn-p" target="_blank">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub</a>
+    <a href="#results" class="btn btn-s">Results</a>
+  </div>
+</div>
+
+<section>
+  <h2>How it works</h2>
+  <p class="sub">Three commands. One score. Zero excuses.</p>
+  <div class="term">
+    <div class="term-bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>trashfire</span></div>
+    <div class="term-body">
+      <div class="l x"># 1. Setup</div>
+      <div class="l"><span class="p">$ </span><span class="c">git clone https://github.com/ktdmax/trashfire.git</span></div>
+      <div class="l"><span class="p">$ </span><span class="c">cd trashfire && cd _scoring && npm install && cd ..</span></div>
+      <div class="l"><span class="p">$ </span><span class="c">bash _scoring/create-blind-copy.sh</span></div>
+      <div class="l o">Blind copy complete: 765 files in 42 projects</div>
+      <div class="l sp"></div>
+      <div class="l x"># 2. Run</div>
+      <div class="l"><span class="p">$ </span><span class="c">bash run-benchmark.sh <span class="f">grog-shop</span></span></div>
+      <div class="l o">  Preset: <span class="f">thorough</span></div>
+      <div class="l o">  Running review...</div>
+      <div class="l o">  <span class="ok">62 issues found</span></div>
+      <div class="l o">  Scoring against ground truth...</div>
+      <div class="l sp"></div>
+      <div class="l x"># 3. Score</div>
+      <div class="l d">  ========================================</div>
+      <div class="l o">  <span class="big">COMPOSITE SCORE: 45.2%</span></div>
+      <div class="l o">  Found: 62/100 | FP: 27</div>
+      <div class="l d">  ----------------------------------------</div>
+      <div class="l o">  SEC 52.8% | TRICKY 76.8% | PERF 93.8%</div>
+      <div class="l d">  ========================================</div>
+      <div class="l o">  <span class="ok">Results saved to _results/</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>What we test</h2>
+  <p class="sub">Six dimensions of code review ability, weighted by importance.</p>
+  <div class="cats">
+    <div class="cat"><div class="cat-w">35%</div><div><div class="cat-n">Security</div><div class="cat-d">OWASP Top 10, CWE-mapped vulnerabilities</div></div></div>
+    <div class="cat"><div class="cat-w">25%</div><div><div class="cat-n">Tricky</div><div class="cat-d">Cross-module bugs, edge cases, timing</div></div></div>
+    <div class="cat"><div class="cat-w">20%</div><div><div class="cat-n">Logic</div><div class="cat-d">Off-by-one, race conditions, async</div></div></div>
+    <div class="cat"><div class="cat-w">10%</div><div><div class="cat-n">Performance</div><div class="cat-d">N+1, memory leaks, blocking I/O</div></div></div>
+    <div class="cat"><div class="cat-w">5%</div><div><div class="cat-n">Best Practice</div><div class="cat-d">Hardcoded values, swallowed errors</div></div></div>
+    <div class="cat"><div class="cat-w">5%</div><div><div class="cat-n">Code Smell</div><div class="cat-d">Dead code, duplication, god functions</div></div></div>
+  </div>
+</section>
+
+<section id="results">
+  <h2>Results</h2>
+  <p class="sub" id="lb-sub"></p>
+  <div class="lb"><table><thead id="lb-head"></thead><tbody id="lb-body"></tbody></table></div>
+</section>
+
+<section>
+  <h2>42 Projects</h2>
+  <p class="sub">Every project is a realistic app with ~100 planted issues.</p>
+  <div class="pg" id="pj"></div>
+</section>
+
+<footer>
+  <div class="warn"><strong>Disclaimer:</strong> All code is AI-generated (Claude) and intentionally vulnerable. Do not use in production.</div>
+  <a href="https://github.com/ktdmax/trashfire">GitHub</a> &middot; MIT License &middot; Made with 🔥 by AI
+</footer>
+
+<script>
+const D=[
+  {d:"Claude Opus 4.6",p:"anthropic",pr:"thorough",sk:[],sc:.452,f:62,t:100,fp:27,re:.62,pre:.70,c:{S:.528,L:0,P:.938,B:0,M:.775,T:.768}},
+  {d:"Claude Opus 4.6",p:"anthropic",pr:"vanilla",sk:[],sc:.411,f:57,t:100,fp:18,re:.57,pre:.76,c:{S:.496,L:0,P:.938,B:0,M:.775,T:.571}},
+  {d:"Claude Opus 4.6",p:"anthropic",pr:"security",sk:[],sc:.377,f:57,t:100,fp:17,re:.57,pre:.77,c:{S:.506,L:0,P:.813,B:0,M:.775,T:.465}},
+];
+const C=["S","L","P","B","M","T"];
+const CN={S:"SEC",L:"LOGIC",P:"PERF",B:"BP",M:"SMELL",T:"TRICKY"};
+const CC={S:"#ef4444",L:"#3b82f6",P:"#eab308",B:"#8b5cf6",M:"#6b7280",T:"#f97316"};
+const P=[
+  ["grog-shop","Next.js"],["tentacle-labs","Flask"],["scumm-bar","Express"],["manny-travel","React+PG"],
+  ["sam-max-cases","Django"],["full-throttle","Go+K8s"],["loom-weaver","Vanilla JS"],["zak-mckracken","PHP+Py+JS"],
+  ["monkey-wrench","Rails"],["day-of-the-tentacle","Elixir"],["indy-fortune","Spring"],["wally-b-feed","Kotlin"],
+  ["guybrush-ledger","Rust/Actix"],["elaine-marley-mesh","Rust/Axum"],["lechuck-crypt","C"],["murrayd-signal","C++"],
+  ["purcell-vault","C#/.NET"],["voodoo-queen","Swift"],["stan-salesman","Ktor"],["fate-of-atlantis","Scala"],
+  ["melee-island-analytics","R/Shiny"],["woodtick-pipeline","Airflow"],["brink-deployer","Terraform"],
+  ["dig-site-graphql","GraphQL"],["bone-song-rpc","gRPC"],["phatt-island-chat","Socket.IO"],
+  ["largo-lagrande-lambda","Lambda"],["governor-phatt-mobile","React Native"],["herman-toothrot-vue","Vue 3"],
+  ["carla-svelte","SvelteKit"],["ozzie-mandrill-ml","FastAPI+ML"],["wally-feeds-flutter","Flutter"],
+  ["spiffy-anchor","Solidity"],["captain-dread-pipe","Julia"],["stan-glass-store","Laravel"],
+  ["jojo-the-monkey","Deno"],["griswold-locksmith","Python CLI"],["bob-the-ghost","Haskell"],
+  ["porcelain-pirates","Perl"],["pegbiter-monitor","Zig"],["otis-escape-room","Litestar"],["cobb-dataforge","dbt"],
+];
+
+const pc=n=>(n*100).toFixed(1)+"%";
+const pi=n=>Math.round(n*100);
+
+function catBar(v,c){
+  return `<div class="cb"><div class="cb-bar"><div class="cb-fill" style="width:${v*100}%;background:${c}"></div></div><div class="cb-v" style="color:${v>0?c:'#444'}">${pi(v)}</div></div>`;
+}
+
+document.getElementById("rc").textContent=D.length;
+document.getElementById("lb-sub").textContent=`${D.length} benchmark runs, sorted by composite score`;
+
+// Table header
+document.getElementById("lb-head").innerHTML=`<tr>
+  <th style="width:36px">#</th><th>Model</th><th>Prompt</th><th>Skills</th>
+  <th class="r">Score</th><th class="r">Found</th>
+  ${C.map(c=>`<th class="r">${CN[c]}</th>`).join("")}
+  <th class="r">FP</th>
+</tr>`;
+
+// Table body
+document.getElementById("lb-body").innerHTML=D.map((r,i)=>{
+  const sk=r.sk.length>0?"SupaSkills":"-";
+  const fp=r.fp>20?`<span style="color:var(--r)">${r.fp}</span>`:r.fp;
+  return `<tr>
+    <td class="rk">${i+1}</td>
+    <td><div class="mn">${r.d}</div><div class="mp">${r.p}</div></td>
+    <td><span class="tag tag-pr">${r.pr}</span></td>
+    <td style="color:var(--m)">${sk}</td>
+    <td class="sc">${pc(r.sc)}</td>
+    <td class="r"><div class="fd"><span>${r.f}/${r.t}</span><div class="fd-bar"><div class="fd-fill" style="width:${r.f}%"></div></div></div></td>
+    ${C.map(c=>` <td class="r">${catBar(r.c[c]||0,CC[c])}</td>`).join("")}
+    <td class="r">${fp}</td>
+  </tr>`;
+}).join("");
+
+// Projects
+document.getElementById("pj").innerHTML=P.map(([n,s])=>`<div class="pc"><b>${n}</b><small>${s}</small></div>`).join("");
+</script>
+</body>
+</html>
