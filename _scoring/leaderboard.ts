@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * leaderboard.ts — Generate shareable leaderboard from benchmark results
+ * leaderboard.ts  - Generate shareable leaderboard from benchmark results
  *
  * Usage:
  *   npx tsx leaderboard.ts [--format md|json|html] [--out <path>]
@@ -50,14 +50,14 @@ function medal(rank: number): string {
 }
 
 function skillLabel(entry: IndexEntry): string {
-  if (entry.skills.length === 0) return "—";
+  if (entry.skills.length === 0) return " -";
   if (entry.skill_source === "superpowers") return "Superpowers";
   if (entry.skill_source === "supaskills") return entry.skills.length > 1 ? `SupaSkills ×${entry.skills.length}` : "SupaSkills";
   return entry.skills.join(", ");
 }
 
 function duration(ms: number): string {
-  if (ms === 0) return "—";
+  if (ms === 0) return " -";
   if (ms < 60000) return `${(ms / 1000).toFixed(0)}s`;
   return `${(ms / 60000).toFixed(1)}m`;
 }
@@ -69,7 +69,7 @@ function generateMarkdown(entries: IndexEntry[]): string {
 
   lines.push(`# 🔥 TRASHFIRE Benchmark Leaderboard`);
   lines.push(``);
-  lines.push(`> AI Code Review Benchmark — ${entries.length} runs across ${new Set(entries.map(e => e.model)).size} models`);
+  lines.push(`> AI Code Review Benchmark  - ${entries.length} runs across ${new Set(entries.map(e => e.model)).size} models`);
   lines.push(`>`);
   lines.push(`> Last updated: ${new Date().toISOString().split("T")[0]}`);
   lines.push(``);
@@ -77,7 +77,7 @@ function generateMarkdown(entries: IndexEntry[]): string {
   // Summary badges
   const best = entries[0];
   if (best) {
-    lines.push(`**Current Leader:** ${best.model_display} (${best.preset}) — **${pct(best.composite_score)}**`);
+    lines.push(`**Current Leader:** ${best.model_display} (${best.preset})  - **${pct(best.composite_score)}**`);
     lines.push(``);
   }
 
@@ -211,9 +211,9 @@ function generateHTML(entries: IndexEntry[]): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TRASHFIRE Leaderboard — AI Code Review Benchmark</title>
+  <title>TRASHFIRE Leaderboard  - AI Code Review Benchmark</title>
   <meta name="description" content="Benchmark leaderboard for AI code review tools across 42 projects, 4200+ planted issues, 30+ languages">
-  <meta property="og:title" content="TRASHFIRE — AI Code Review Benchmark">
+  <meta property="og:title" content="TRASHFIRE  - AI Code Review Benchmark">
   <meta property="og:description" content="How well can AI find bugs? ${entries.length} runs, ${new Set(entries.map(e => e.model)).size} models. Current leader: ${best?.model_display} at ${best ? pct(best.composite_score) : 'N/A'}">
   <style>
     :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --accent: #f97316; --green: #3fb950; --red: #f85149; }
@@ -246,10 +246,10 @@ function generateHTML(entries: IndexEntry[]): string {
 <body>
   <div class="container">
     <h1>🔥 <span>TRASHFIRE</span> Leaderboard</h1>
-    <p class="subtitle">AI Code Review Benchmark — ${entries.length} runs across ${new Set(entries.map(e => e.model)).size} models • Last updated: ${new Date().toISOString().split("T")[0]}</p>
+    <p class="subtitle">AI Code Review Benchmark  - ${entries.length} runs across ${new Set(entries.map(e => e.model)).size} models • Last updated: ${new Date().toISOString().split("T")[0]}</p>
 
     <div class="stats">
-      <div class="stat"><div class="stat-value">${best ? pct(best.composite_score) : '—'}</div><div class="stat-label">Best Score (${best?.model_display ?? '—'})</div></div>
+      <div class="stat"><div class="stat-value">${best ? pct(best.composite_score) : ' -'}</div><div class="stat-label">Best Score (${best?.model_display ?? ' -'})</div></div>
       <div class="stat"><div class="stat-value">42</div><div class="stat-label">Projects / 30+ Languages</div></div>
       <div class="stat"><div class="stat-value">4,200+</div><div class="stat-label">Planted Issues</div></div>
       <div class="stat"><div class="stat-value">${entries.length}</div><div class="stat-label">Benchmark Runs</div></div>
@@ -272,7 +272,7 @@ function generateHTML(entries: IndexEntry[]): string {
         <li><strong>~4,200 planted issues:</strong> Security (35%), Tricky cross-module (25%), Logic (20%), Performance (10%), Best Practices (5%), Code Smells (5%)</li>
         <li><strong>~300 red herrings:</strong> Code that looks vulnerable but is safe (tests false-positive rate)</li>
         <li><strong>Difficulty tiers 1-5</strong> with multipliers ×1.0 to ×3.0 (finding hard bugs scores more)</li>
-        <li><strong>Encrypted ground truth</strong> (AES-256-GCM) — unavailable to reviewers during testing</li>
+        <li><strong>Encrypted ground truth</strong> (AES-256-GCM)  - unavailable to reviewers during testing</li>
         <li><strong>Blind testing:</strong> All bug markers stripped from source code</li>
       </ul>
     </div>

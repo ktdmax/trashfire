@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# create-blind-copy.sh — Create a blind testing copy with BUG markers stripped
+# create-blind-copy.sh  - Create a blind testing copy with BUG markers stripped
 #
 # Usage: ./create-blind-copy.sh [--target <dir>]
 #

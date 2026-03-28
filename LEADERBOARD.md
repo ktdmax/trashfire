@@ -1,18 +1,18 @@
 # 🔥 TRASHFIRE Benchmark Leaderboard
 
-> AI Code Review Benchmark — 3 runs across 1 models
+> AI Code Review Benchmark  - 3 runs across 1 models
 >
 > Last updated: 2026-03-28
 
-**Current Leader:** Claude Opus 4.6 (dev-savvy) — **45.2%**
+**Current Leader:** Claude Opus 4.6 (dev-savvy)  - **45.2%**
 
 ## Overall Rankings
 
 | Rank | Model | Prompt | Skills | Score | Recall | Precision | FP | Projects |
 |:----:|-------|--------|--------|------:|-------:|----------:|---:|:--------:|
-| 🥇 | **Claude Opus 4.6** | dev-savvy | — | **45.2%** | 0.0% | 0.0% | 27 | 1 |
-| 🥈 | **Claude Opus 4.6** | vanilla | — | **41.1%** | 0.0% | 0.0% | 18 | 1 |
-| 🥉 | **Claude Opus 4.6** | expert | — | **37.7%** | 0.0% | 0.0% | 17 | 1 |
+| 🥇 | **Claude Opus 4.6** | dev-savvy |  - | **45.2%** | 0.0% | 0.0% | 27 | 1 |
+| 🥈 | **Claude Opus 4.6** | vanilla |  - | **41.1%** | 0.0% | 0.0% | 18 | 1 |
+| 🥉 | **Claude Opus 4.6** | expert |  - | **37.7%** | 0.0% | 0.0% | 17 | 1 |
 
 ## Average Score per Prompt Strategy
 

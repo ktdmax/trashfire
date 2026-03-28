@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# strip-markers.sh — Remove BUG-XXXX marker comments from source code for blind testing
+# strip-markers.sh  - Remove BUG-XXXX marker comments from source code for blind testing
 #
 # Usage: ./strip-markers.sh <project-dir> [--dry-run]
 #

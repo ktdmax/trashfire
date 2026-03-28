@@ -1,6 +1,6 @@
 #!/usr/bin/env npx tsx
 /**
- * benchmark.ts — Standardized benchmark runner for TRASHFIRE
+ * benchmark.ts  - Standardized benchmark runner for TRASHFIRE
  *
  * Runs a code review benchmark with configurable model, prompt, skills,
  * and produces structured JSON results with full reproducibility metadata.

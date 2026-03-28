@@ -88,7 +88,7 @@ Use the appropriate comment syntax for the language (`//`, `#`, `--`, `/* */`).
 
 ## Code of Conduct
 
-Be kind. This project is about improving AI tools, not about shaming them. Every model has strengths and weaknesses — the goal is to measure and improve, not to dunk.
+Be kind. This project is about improving AI tools, not about shaming them. Every model has strengths and weaknesses  - the goal is to measure and improve, not to dunk.
 
 ## License
 

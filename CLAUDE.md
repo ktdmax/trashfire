@@ -47,7 +47,7 @@ trashfire/
   _md/                 # Research documents and reports
 ```
 
-Each project is **self-contained** — its own framework, DB, auth, and dependencies. No shared code between projects.
+Each project is **self-contained**  - its own framework, DB, auth, and dependencies. No shared code between projects.
 
 ## Tech Stack Per Project (42 Projects)
 
@@ -127,13 +127,13 @@ Each project is **self-contained** — its own framework, DB, auth, and dependen
 
 When writing vulnerable code for this benchmark:
 
-1. **Every bug must be exploitable** — no theoretical-only vulnerabilities
-2. **Code must look realistic** — a senior developer should not spot all bugs on a skim read
-3. **Mix obvious and subtle** — some bugs catch attention, others hide in plain sight
-4. **Cross-module bugs are the real test** — bugs that span 3+ functions/files
-5. **Include red herrings** (5-10 per project) — code that looks vulnerable but is actually safe
-6. **All code must parse/compile** — no broken syntax
-7. **Not just security** — include logic bugs, performance issues, best practice violations, code smells
+1. **Every bug must be exploitable**  - no theoretical-only vulnerabilities
+2. **Code must look realistic**  - a senior developer should not spot all bugs on a skim read
+3. **Mix obvious and subtle**  - some bugs catch attention, others hide in plain sight
+4. **Cross-module bugs are the real test**  - bugs that span 3+ functions/files
+5. **Include red herrings** (5-10 per project)  - code that looks vulnerable but is actually safe
+6. **All code must parse/compile**  - no broken syntax
+7. **Not just security**  - include logic bugs, performance issues, best practice violations, code smells
 
 ### Issue Categories (6 categories, 100 issues per project)
 
@@ -235,4 +235,4 @@ Penalties: -1.0 per false positive, -2.0 per flagged red herring
 ## MCP Integration
 
 - **SupaSkills** for security expertise: `claude mcp add supaskills --transport http -H "Authorization: Bearer YOUR_KEY" -- https://www.supaskills.ai/mcp`
-- **Context7** for framework docs (active): `claude mcp add context7 -- npx -y @upstash/context7-mcp@latest` — append `use context7` to prompts when writing framework-specific code to pull current docs and ensure vulnerability patterns match real framework behavior
+- **Context7** for framework docs (active): `claude mcp add context7 -- npx -y @upstash/context7-mcp@latest`  - append `use context7` to prompts when writing framework-specific code to pull current docs and ensure vulnerability patterns match real framework behavior
