@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRASHFIRE Badge Generator</title>
+  <link rel="icon" href="icon.svg">
+  <style>
+    :root{--bg:#09090b;--s:#18181b;--s2:#27272a;--b:#3f3f46;--t:#fafafa;--m:#a1a1aa;--o:#f97316;--g:#22c55e;--r:#ef4444}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t);padding:2rem;line-height:1.5}
+    h1{font-size:1.8rem;font-weight:800;margin-bottom:.3rem}
+    h1 em{color:var(--o);font-style:normal}
+    .sub{color:var(--m);margin-bottom:2rem}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;max-width:900px}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}}
+
+    .form{display:flex;flex-direction:column;gap:1rem}
+    label{font-size:.8rem;color:var(--m);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+    input,select{background:var(--s);border:1px solid var(--b);border-radius:8px;padding:.6rem .8rem;color:var(--t);font-size:.9rem;outline:none}
+    input:focus,select:focus{border-color:var(--o)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+
+    .preview{display:flex;flex-direction:column;align-items:center;gap:1.5rem}
+    .badge-wrap{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:2rem;display:flex;justify-content:center}
+    .actions{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
+    .btn{padding:.5rem 1.2rem;border-radius:8px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;transition:all .15s}
+    .btn-p{background:var(--o);color:#fff}.btn-p:hover{opacity:.9}
+    .btn-s{background:var(--s);color:var(--t);border:1px solid var(--b)}.btn-s:hover{border-color:var(--m)}
+
+    .cats{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.25rem}
+    .cat-btn{padding:.25rem .6rem;border-radius:6px;font-size:.72rem;font-weight:600;border:1px solid var(--b);background:var(--s2);color:var(--m);cursor:pointer}
+    .cat-btn.active{background:var(--o);color:#fff;border-color:var(--o)}
+  </style>
+</head>
+<body>
+
+<h1><em>TRASHFIRE</em> Badge Generator</h1>
+<p class="sub">Create a shareable badge for your benchmark result.</p>
+
+<div class="grid">
+  <div class="form">
+    <div>
+      <label>Model</label>
+      <input id="model" value="Claude Opus 4.6" placeholder="Model name">
+    </div>
+    <div>
+      <label>Skill / Prompt</label>
+      <input id="skill" value="vanilla" placeholder="Skill name or prompt preset">
+    </div>
+    <div class="row">
+      <div>
+        <label>Score (%)</label>
+        <input id="score" type="number" value="45.2" min="0" max="100" step="0.1">
+      </div>
+      <div>
+        <label>Found / Total</label>
+        <input id="found" value="62/100" placeholder="62/100">
+      </div>
+    </div>
+    <div>
+      <label>Project</label>
+      <select id="project">
+        <option value="overall">Overall (all projects)</option>
+        <option value="grog-shop" selected>grog-shop</option>
+        <option value="tentacle-labs">tentacle-labs</option>
+        <option value="scumm-bar">scumm-bar</option>
+        <option value="manny-travel">manny-travel</option>
+        <option value="sam-max-cases">sam-max-cases</option>
+        <option value="full-throttle">full-throttle</option>
+        <option value="loom-weaver">loom-weaver</option>
+        <option value="zak-mckracken">zak-mckracken</option>
+      </select>
+    </div>
+    <div>
+      <label>Category (optional - for category wins)</label>
+      <div class="cats">
+        <button class="cat-btn" data-cat="" onclick="setCat(this)">Overall</button>
+        <button class="cat-btn" data-cat="SEC" onclick="setCat(this)">Security</button>
+        <button class="cat-btn" data-cat="LOGIC" onclick="setCat(this)">Logic</button>
+        <button class="cat-btn" data-cat="PERF" onclick="setCat(this)">Performance</button>
+        <button class="cat-btn" data-cat="TRICKY" onclick="setCat(this)">Tricky</button>
+        <button class="cat-btn" data-cat="BP" onclick="setCat(this)">Best Practice</button>
+        <button class="cat-btn" data-cat="SMELL" onclick="setCat(this)">Code Smell</button>
+      </div>
+    </div>
+    <div>
+      <label>Style</label>
+      <div class="cats">
+        <button class="cat-btn active" data-style="dark" onclick="setStyle(this)">Dark</button>
+        <button class="cat-btn" data-style="light" onclick="setStyle(this)">Light</button>
+      </div>
+    </div>
+  </div>
+  <div class="preview">
+    <div class="badge-wrap" id="badge-container"></div>
+    <div class="actions">
+      <button class="btn btn-p" onclick="downloadSVG()">Download SVG</button>
+      <button class="btn btn-s" onclick="downloadPNG()">Download PNG</button>
+      <button class="btn btn-s" onclick="copyEmbed()">Copy Embed</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentCat = "";
+let currentStyle = "dark";
+
+function setCat(el) {
+  document.querySelectorAll('.cat-btn[data-cat]').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentCat = el.dataset.cat;
+  render();
+}
+function setStyle(el) {
+  document.querySelectorAll('.cat-btn[data-style]').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentStyle = el.dataset.style;
+  render();
+}
+
+function scoreColor(s) {
+  if (s >= 70) return "#22c55e";
+  if (s >= 40) return "#f97316";
+  return "#ef4444";
+}
+
+function generateSVG() {
+  const model = document.getElementById("model").value || "Model";
+  const skill = document.getElementById("skill").value || "vanilla";
+  const score = parseFloat(document.getElementById("score").value) || 0;
+  const found = document.getElementById("found").value || "0/100";
+  const project = document.getElementById("project").value;
+  const cat = currentCat;
+  const dark = currentStyle === "dark";
+
+  const bg = dark ? "#18181b" : "#ffffff";
+  const bg2 = dark ? "#27272a" : "#f4f4f5";
+  const border = dark ? "#3f3f46" : "#d4d4d8";
+  const text = dark ? "#fafafa" : "#09090b";
+  const muted = dark ? "#a1a1aa" : "#71717a";
+  const sc = scoreColor(score);
+
+  const w = 420, h = 180;
+  const catLabel = cat ? ` / ${cat}` : "";
+  const projectLabel = project === "overall" ? "Overall" : project;
+  const barW = Math.max(0, Math.min(score, 100)) / 100 * 260;
+
+  // Pixel fire icon (simplified)
+  const fireIcon = `
+    <rect fill="#f97316" x="14" y="8" width="4" height="4"/>
+    <rect fill="#fb923c" x="18" y="10" width="3" height="3"/>
+    <rect fill="#fbbf24" x="16" y="10" width="2" height="2"/>
+    <rect fill="#3f3f46" x="12" y="14" width="12" height="10"/>
+    <rect fill="#52525b" x="14" y="16" width="2" height="6"/>
+    <rect fill="#52525b" x="19" y="16" width="2" height="6"/>
+    <rect fill="#f97316" x="12" y="24" width="4" height="4"/>
+    <rect fill="#fb923c" x="16" y="25" width="4" height="4"/>
+    <rect fill="#fbbf24" x="20" y="24" width="4" height="3"/>
+  `;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <rect width="${w}" height="${h}" rx="16" fill="${bg}" stroke="${border}" stroke-width="1"/>
+
+  <!-- Icon -->
+  <g transform="translate(16,12) scale(1.2)">${fireIcon}</g>
+
+  <!-- TRASHFIRE -->
+  <text x="60" y="34" font-family="monospace" font-size="13" font-weight="800" fill="#f97316">TRASH</text>
+  <text x="113" y="34" font-family="monospace" font-size="13" font-weight="800" fill="${text}">FIRE</text>
+
+  <!-- Model + Skill -->
+  <text x="24" y="62" font-family="sans-serif" font-size="16" font-weight="700" fill="${text}">${model}</text>
+  <text x="24" y="82" font-family="sans-serif" font-size="12" fill="${muted}">${skill}${catLabel} - ${projectLabel}</text>
+
+  <!-- Score -->
+  <text x="24" y="116" font-family="sans-serif" font-size="36" font-weight="800" fill="${sc}">${score.toFixed(1)}%</text>
+
+  <!-- Bar -->
+  <rect x="24" y="132" width="260" height="8" rx="4" fill="${bg2}"/>
+  <rect x="24" y="132" width="${barW}" height="8" rx="4" fill="${sc}"/>
+
+  <!-- Found -->
+  <text x="300" y="116" font-family="monospace" font-size="13" font-weight="600" fill="${text}">${found}</text>
+  <text x="300" y="132" font-family="sans-serif" font-size="10" fill="${muted}">found</text>
+
+  <!-- Rank marker -->
+  <rect x="300" y="140" width="96" height="24" rx="6" fill="${bg2}" stroke="${border}" stroke-width="1"/>
+  <text x="348" y="157" font-family="monospace" font-size="10" font-weight="600" fill="${muted}" text-anchor="middle">trashfire.io</text>
+</svg>`;
+}
+
+function render() {
+  document.getElementById("badge-container").innerHTML = generateSVG();
+}
+
+function downloadSVG() {
+  const svg = generateSVG();
+  const blob = new Blob([svg], { type: "image/svg+xml" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "trashfire-badge.svg";
+  a.click();
+}
+
+function downloadPNG() {
+  const svg = generateSVG();
+  const canvas = document.createElement("canvas");
+  canvas.width = 840; canvas.height = 360; // 2x for retina
+  const ctx = canvas.getContext("2d");
+  const img = new Image();
+  img.onload = () => {
+    ctx.drawImage(img, 0, 0, 840, 360);
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = "trashfire-badge.png";
+    a.click();
+  };
+  img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+}
+
+function copyEmbed() {
+  const model = document.getElementById("model").value;
+  const score = document.getElementById("score").value;
+  const embed = `[![TRASHFIRE ${score}%](https://trashfire.io/api/badge?model=${encodeURIComponent(model)}&score=${score})](https://trashfire.io)`;
+  navigator.clipboard.writeText(embed).then(() => alert("Copied markdown embed!"));
+}
+
+// Auto-update
+document.querySelectorAll("input, select").forEach(el => el.addEventListener("input", render));
+render();
+</script>
+</body>
+</html>
