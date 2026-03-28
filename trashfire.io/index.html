@@ -163,9 +163,25 @@
     <!-- Step 2 -->
     <div style="background:var(--s);border:1px solid var(--b);border-radius:10px;padding:1.25rem">
       <div style="font-family:'Press Start 2P',monospace;font-size:.6rem;color:var(--o);margin-bottom:.5rem">STEP 2 - REVIEW</div>
-      <p style="color:var(--m);font-size:.88rem;margin-bottom:.75rem">Open your AI tool in the repo folder. Load your skills if you have any. Then say:</p>
+      <p style="color:var(--m);font-size:.88rem;margin-bottom:.75rem">Open your AI tool in the repo folder. Load your skills if you have any. Pick a vault:</p>
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem;flex-wrap:wrap">
+        <select id="vault-select" onchange="updatePrompt()" style="background:var(--s2);border:1px solid var(--b);border-radius:6px;padding:.4rem .6rem;color:var(--t);font-family:monospace;font-size:.82rem">
+          <option value="grog-shop">grog-shop (Next.js)</option>
+          <option value="tentacle-labs">tentacle-labs (Flask)</option>
+          <option value="scumm-bar">scumm-bar (Express)</option>
+          <option value="manny-travel">manny-travel (React+PG)</option>
+          <option value="sam-max-cases">sam-max-cases (Django)</option>
+          <option value="full-throttle">full-throttle (Go+K8s)</option>
+          <option value="loom-weaver">loom-weaver (Vanilla JS)</option>
+          <option value="zak-mckracken">zak-mckracken (PHP+Py+JS)</option>
+        </select>
+        <span style="color:var(--m);font-size:.78rem">or review all 42 vaults</span>
+      </div>
       <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:8px;padding:1rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--t);white-space:pre-wrap" id="prompt-box">Read every file in vaults/grog-shop/. Find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. For each finding report: file, line, severity, category, cwe, title, description, fix. Save your findings as JSON to review.json</div>
-      <button onclick="navigator.clipboard.writeText(document.getElementById('prompt-box').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)" style="margin-top:.5rem;padding:.35rem .8rem;border-radius:5px;font-size:.72rem;font-weight:600;background:var(--o);color:#fff;border:none;cursor:pointer;font-family:monospace">Copy</button>
+      <div style="display:flex;gap:.5rem;margin-top:.5rem">
+        <button onclick="copyPrompt()" id="copy-btn" style="padding:.35rem .8rem;border-radius:5px;font-size:.72rem;font-weight:600;background:var(--o);color:#fff;border:none;cursor:pointer;font-family:monospace">Copy</button>
+        <button onclick="copyFullPrompt()" style="padding:.35rem .8rem;border-radius:5px;font-size:.72rem;font-weight:600;background:var(--s2);color:var(--t);border:1px solid var(--b);cursor:pointer;font-family:monospace">Copy full test (all 42 vaults)</button>
+      </div>
     </div>
 
     <!-- Step 3 -->
@@ -312,6 +328,21 @@ document.getElementById("lb-body").innerHTML=D.map((r,i)=>{
 
 // Projects
 document.getElementById("pj").innerHTML=P.map(([n,s])=>`<div class="pc"><b>${n}</b><small>${s}</small></div>`).join("");
+
+// Prompt builder
+function updatePrompt(){
+  const v=document.getElementById('vault-select').value;
+  document.getElementById('prompt-box').textContent=`Read every file in vaults/${v}/. Find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. For each finding report: file, line, severity, category, cwe, title, description, fix. Save your findings as JSON to review.json`;
+}
+function copyPrompt(){
+  navigator.clipboard.writeText(document.getElementById('prompt-box').textContent);
+  const b=document.getElementById('copy-btn');b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1500);
+}
+function copyFullPrompt(){
+  const t=`Read BENCHMARK_RUNNER.md for the full protocol. Then review every vault in vaults/ one by one. For each vault, read every file and find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. For each finding report: file, line, severity, category, cwe, title, description, fix. Save findings per vault as review-VAULTNAME.json. After all vaults are reviewed, score each one against its manifest in _manifests/VAULTNAME.enc (passphrase: monkey). Show me a summary of all scores.`;
+  navigator.clipboard.writeText(t);
+  event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='Copy full test (all 42 vaults)',1500);
+}
 </script>
 </body>
 </html>
