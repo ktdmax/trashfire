@@ -1,0 +1,60 @@
+name: Vault Feedback
+description: Report issues with a vault's code quality, realism, or planted bugs
+title: "[Vault] VAULT-NAME - short description"
+labels: ["vault-feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Found something off in a vault? Let us know.
+        All code is AI-generated. Mistakes happen. Your feedback makes the benchmark better.
+
+  - type: input
+    id: vault
+    attributes:
+      label: Vault
+      placeholder: "e.g. grog-shop"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: What kind of issue?
+      options:
+        - "Code doesn't make sense (unrealistic logic, no real app would do this)"
+        - "Planted bug is wrong (marked as bug but it's actually fine)"
+        - "Planted bug is too obvious (no developer would ever write this)"
+        - "Missing bug (real vulnerability exists but isn't in the manifest)"
+        - "Code doesn't compile/parse (syntax error, broken import)"
+        - "Red herring is wrong (marked as safe but it's actually vulnerable)"
+        - "Structure issue (files missing, wrong framework patterns)"
+        - "Other"
+    validations:
+      required: true
+
+  - type: input
+    id: file
+    attributes:
+      label: File
+      placeholder: "e.g. vaults/grog-shop/lib/auth.ts"
+
+  - type: input
+    id: line
+    attributes:
+      label: Line (approximate)
+      placeholder: "e.g. 42"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What's wrong?
+      description: Be specific. What did you expect, what did you find?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix (optional)
+      description: How would you make it more realistic or correct?
