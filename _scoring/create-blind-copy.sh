@@ -17,14 +17,9 @@ echo "Creating blind testing copy at: $TARGET"
 rm -rf "$TARGET"
 mkdir -p "$TARGET"
 
-# Copy project directories (excluding internal dirs)
-for dir in "$ROOT_DIR"/*/; do
+# Copy project directories from projects/ folder
+for dir in "$ROOT_DIR"/projects/*/; do
   dirname="$(basename "$dir")"
-  # Skip internal directories
-  case "$dirname" in
-    _*|node_modules|.git|.DS_Store) continue ;;
-  esac
-
   echo "  Copying $dirname..."
   cp -r "$dir" "$TARGET/$dirname"
 done

@@ -457,7 +457,9 @@ function main() {
     const outDirIdx = args.indexOf("--out-dir");
     const outDir = outDirIdx !== -1 ? args[outDirIdx + 1] : join(rootDir, "_manifests");
 
-    const entries = readdirSync(rootDir, { withFileTypes: true });
+    const projectsDir = join(rootDir, "projects");
+    const scanDir = existsSync(projectsDir) ? projectsDir : rootDir;
+    const entries = readdirSync(scanDir, { withFileTypes: true });
     const projects = entries
       .filter(e => e.isDirectory() && !e.name.startsWith("_") && !e.name.startsWith(".") && e.name !== "node_modules")
       .map(e => e.name)
@@ -467,7 +469,7 @@ function main() {
     let totalRH = 0;
 
     for (const project of projects) {
-      const projectDir = join(rootDir, project);
+      const projectDir = join(scanDir, project);
       const manifest = buildManifest(projectDir, project);
 
       const outPath = join(outDir, `${project}.json`);

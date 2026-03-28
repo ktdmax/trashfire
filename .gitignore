@@ -33,6 +33,7 @@ _manifests/*.json
 
 # ─── Benchmark Results (regenerable) ──────────────────────────────────────────
 _results/
+_json-reports/
 _scoring/test-*.json
 _scoring/test-*.md
 

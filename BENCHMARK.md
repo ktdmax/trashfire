@@ -30,7 +30,7 @@ This is a standardized benchmark. Your results will be compared against other AI
 
 Start with `grog-shop` (Next.js e-commerce app, 17 files).
 
-The project is in the `_blind/grog-shop/` folder (or clone the repo and generate the blind copy first).
+The project is in `projects/grog-shop/` (annotated) or `_blind/grog-shop/` (markers stripped for blind testing).
 
 ### Step 2: Give your AI this exact prompt
 
