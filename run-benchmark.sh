@@ -57,9 +57,9 @@ if [ -n "${2:-}" ]; then
 else
   echo ""
   echo -e "  ${CYAN}Prompt presets:${NC}"
-  echo "    1) vanilla    - 'Review this code for issues'"
-  echo "    2) expert     - Detailed security focus"
-  echo "    3) dev-savvy  - Experienced developer, all categories"
+  echo "    1) vanilla    - 'Review this code for issues' (no guidance)"
+  echo "    2) security   - Security vulnerabilities only"
+  echo "    3) thorough   - All categories: security, logic, perf, best practices"
   echo "    4) custom     - Type your own prompt"
   echo ""
   read -p "  Pick a preset (1-4, default: 1): " PRESET_CHOICE
@@ -67,8 +67,8 @@ else
 
   case "$PRESET_CHOICE" in
     1) PROMPT="Review this codebase for any issues you can find. Check all the files." ; PRESET="vanilla" ;;
-    2) PROMPT="You are an expert security reviewer. Review this codebase for security vulnerabilities. Check every file thoroughly for: SQL injection, XSS, auth bypass, RCE, SSRF, IDOR, CSRF, path traversal, command injection, deserialization, hardcoded secrets, weak crypto, and any other security issues." ; PRESET="expert" ;;
-    3) PROMPT="Review all files as an experienced senior developer. Find: security bugs (SQLi, XSS, auth issues, injection, SSRF, IDOR), logic errors (race conditions, off-by-one, wrong comparisons, async problems), performance problems (N+1 queries, memory leaks, blocking calls), bad practices (hardcoded values, swallowed errors, missing validation, weak crypto), and tricky cross-function bugs. Think about edge cases: empty arrays, negative numbers, concurrent requests, float arithmetic for money." ; PRESET="dev-savvy" ;;
+    2) PROMPT="You are an expert security reviewer. Review this codebase for security vulnerabilities. Check every file thoroughly for: SQL injection, XSS, auth bypass, RCE, SSRF, IDOR, CSRF, path traversal, command injection, deserialization, hardcoded secrets, weak crypto, and any other security issues." ; PRESET="security" ;;
+    3) PROMPT="Review all files as an experienced senior developer. Find: security bugs (SQLi, XSS, auth issues, injection, SSRF, IDOR), logic errors (race conditions, off-by-one, wrong comparisons, async problems), performance problems (N+1 queries, memory leaks, blocking calls), bad practices (hardcoded values, swallowed errors, missing validation, weak crypto), and tricky cross-function bugs. Think about edge cases: empty arrays, negative numbers, concurrent requests, float arithmetic for money." ; PRESET="thorough" ;;
     4) read -p "  Enter your prompt: " PROMPT ; PRESET="custom" ;;
     *) PROMPT="Review this codebase for any issues you can find. Check all the files." ; PRESET="vanilla" ;;
   esac

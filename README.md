@@ -124,8 +124,8 @@ bash run-benchmark.sh tentacle-labs "Your custom review prompt here"
 | Preset | Description |
 |--------|-------------|
 | `vanilla` | "Review this code for issues"  - baseline, no guidance |
-| `expert` | Detailed security reviewer prompt |
-| `dev-savvy` | Experienced developer reviewing for all issue types |
+| `security` | Detailed security reviewer prompt |
+| `thorough` | Experienced developer reviewing for all issue types |
 | `superpowers` | [obra/superpowers](https://github.com/obra/superpowers) methodology |
 | `supaskills-single` | [SupaSkills](https://supaskills.ai) security skill |
 | `supaskills-multi` | SupaSkills multi-skill (security + performance + quality) |

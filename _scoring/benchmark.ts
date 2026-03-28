@@ -11,7 +11,7 @@
  *   npx tsx benchmark.ts --preset vanilla --project grog-shop
  *   npx tsx benchmark.ts --preset superpowers --project all --model claude-sonnet-4-20250514
  *
- * Presets: vanilla, expert, dev-savvy, superpowers, supaskills-single, supaskills-multi
+ * Presets: vanilla, security, thorough, superpowers, supaskills-single, supaskills-multi
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
@@ -109,16 +109,16 @@ const PRESETS: Record<string, { name: string; prompt: string; skills: string[]; 
     skills: [],
     skill_source: "none",
   },
-  expert: {
-    name: "Expert Security Reviewer",
-    prompt: `You are an expert security reviewer. Review this codebase for security vulnerabilities.
+  security: {
+    name: "Security Focus",
+    prompt: `You are an security security reviewer. Review this codebase for security vulnerabilities.
 Check every file thoroughly for: SQL injection, XSS, auth bypass, RCE, SSRF, IDOR, CSRF, path traversal,
 command injection, deserialization, hardcoded secrets, weak crypto, and any other security issues.
 For each finding provide: file, line, severity, CWE, title, description, and fix.`,
     skills: [],
     skill_source: "none",
   },
-  "dev-savvy": {
+  "thorough": {
     name: "Experienced Developer",
     prompt: `Review all files in this codebase as an experienced senior developer.
 Find: security bugs (SQLi, XSS, auth issues, injection, SSRF, IDOR), logic errors (race conditions,
@@ -683,8 +683,8 @@ Usage:
 
 Presets:
   vanilla          No guidance, just "review this code"
-  expert           Expert security reviewer prompt
-  dev-savvy        Experienced developer prompt
+  security           Expert security reviewer prompt
+  thorough        Experienced developer prompt
   superpowers      obra/superpowers methodology
   supaskills-single  SupaSkills security skill
   supaskills-multi   SupaSkills multi-skill
@@ -705,7 +705,7 @@ Options:
 
 Examples:
   npx tsx benchmark.ts --preset vanilla --project grog-shop
-  npx tsx benchmark.ts --preset expert --project all --model claude-sonnet-4-6
+  npx tsx benchmark.ts --preset security --project all --model claude-sonnet-4-6
   npx tsx benchmark.ts --preset custom --prompt "Find all SQL injections" --project tentacle-labs
   npx tsx benchmark.ts --import review.json --project grog-shop --preset custom --model my-model
 `);

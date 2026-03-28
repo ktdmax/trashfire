@@ -4,23 +4,23 @@
 >
 > Last updated: 2026-03-28
 
-**Current Leader:** Claude Opus 4.6 (dev-savvy)  - **45.2%**
+**Current Leader:** Claude Opus 4.6 (thorough)  - **45.2%**
 
 ## Overall Rankings
 
 | Rank | Model | Prompt | Skills | Score | Recall | Precision | FP | Projects |
 |:----:|-------|--------|--------|------:|-------:|----------:|---:|:--------:|
-| 🥇 | **Claude Opus 4.6** | dev-savvy |  - | **45.2%** | 0.0% | 0.0% | 27 | 1 |
+| 🥇 | **Claude Opus 4.6** | thorough |  - | **45.2%** | 0.0% | 0.0% | 27 | 1 |
 | 🥈 | **Claude Opus 4.6** | vanilla |  - | **41.1%** | 0.0% | 0.0% | 18 | 1 |
-| 🥉 | **Claude Opus 4.6** | expert |  - | **37.7%** | 0.0% | 0.0% | 17 | 1 |
+| 🥉 | **Claude Opus 4.6** | security |  - | **37.7%** | 0.0% | 0.0% | 17 | 1 |
 
 ## Average Score per Prompt Strategy
 
 | Strategy | Avg Score | Runs | Best | Worst |
 |----------|----------:|-----:|-----:|------:|
-| **dev-savvy** | **45.2%** | 1 | 45.2% | 45.2% |
+| **thorough** | **45.2%** | 1 | 45.2% | 45.2% |
 | **vanilla** | **41.1%** | 1 | 41.1% | 41.1% |
-| **expert** | **37.7%** | 1 | 37.7% | 37.7% |
+| **security** | **37.7%** | 1 | 37.7% | 37.7% |
 
 ## Methodology
 
@@ -38,7 +38,7 @@
 ```bash
 # Run a benchmark
 npx tsx _scoring/benchmark.ts --preset vanilla --project grog-shop
-npx tsx _scoring/benchmark.ts --preset expert --project all --model claude-sonnet-4-6
+npx tsx _scoring/benchmark.ts --preset security --project all --model claude-sonnet-4-6
 
 # Generate leaderboard
 npx tsx _scoring/leaderboard.ts --format md --out LEADERBOARD.md
