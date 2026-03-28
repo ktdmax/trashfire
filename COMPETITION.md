@@ -37,13 +37,17 @@ Your submission must be **publicly available**.
 
 ### Rule 3: Fair Play
 
-No gaming the benchmark.
+No gaming the benchmark. No cheating. No shortcuts.
 
+- **DO NOT grep/search for BUG-XXX or RH-XXX markers.** That is cheating, not reviewing. Two out of three models tried this in our first test round. It's immediately obvious and your result is invalid.
+- **DO NOT read _manifests/ files.** That is the answer key.
+- **Always use the blind copy (_blind/) or strip markers first.** The vaults/ folder contains annotations.
 - Don't train on the TRASHFIRE codebase
 - Don't reverse-engineer the encrypted manifests
 - Don't hard-code findings
 - Don't submit results you can't reproduce
 - If your skill only works on TRASHFIRE and fails on real code, it doesn't count
+- **Cheating is obvious.** If your findings match marker patterns 1:1, the community will catch it instantly.
 
 ## How to Compete
 

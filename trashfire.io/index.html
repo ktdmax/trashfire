@@ -191,7 +191,7 @@
         <span onclick="setTier('single')" class="tier-btn" style="padding:.2rem .6rem;border-radius:5px;font-size:.68rem;font-weight:600;cursor:pointer;border:1px solid var(--b);background:var(--s2);color:var(--m)">Focused (1 vault)</span>
         <span onclick="setTier('ultimate')" class="tier-btn" style="padding:.2rem .6rem;border-radius:5px;font-size:.68rem;font-weight:600;cursor:pointer;border:1px solid var(--b);background:var(--s2);color:var(--m)">Ultimate (42 vaults)</span>
       </div>
-      <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:8px;padding:1rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--t);white-space:pre-wrap" id="prompt-box">Clone https://github.com/ktdmax/trashfire.git - read BENCHMARK_RUNNER.md for the rules and COMPETITION.md for the scoring. Then run the Standard Benchmark: review these 3 vaults one by one: vaults/grog-shop/, vaults/tentacle-labs/, vaults/lechuck-crypt/. For each vault, read every file and find all issues. Score each result against its encrypted manifest. Show me the report.</div>
+      <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:8px;padding:1rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--t);white-space:pre-wrap" id="prompt-box">Clone https://github.com/ktdmax/trashfire.git - read BENCHMARK_RUNNER.md for the rules (IMPORTANT: do not grep for BUG markers, do not read _manifests/, find bugs by actually reviewing the code). Run: cd _scoring && npm install && cd .. && bash _scoring/create-blind-copy.sh to create the clean test copy. Then run the Standard Benchmark: review these 3 folders one by one: _blind/grog-shop/, _blind/tentacle-labs/, _blind/lechuck-crypt/. For each, read every file and find all issues by understanding the code. Score each result against its encrypted manifest in _manifests/. Show me the report.</div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem;align-items:center">
         <button onclick="copyPrompt()" id="copy-btn" style="padding:.35rem .8rem;border-radius:5px;font-size:.72rem;font-weight:600;background:var(--o);color:#fff;border:none;cursor:pointer;font-family:monospace">Copy</button>
         <span id="tier-info" style="font-size:.7rem;color:var(--m)">3 vaults, ~3 hours, standard benchmark</span>
@@ -388,13 +388,13 @@ function setTier(t){
 function updatePrompt(){
   const v=document.getElementById('vault-select').value;
   const base='Find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. For each finding report: file, line, severity, category, cwe, title, description, fix.';
-  const pre='Clone https://github.com/ktdmax/trashfire.git - read BENCHMARK_RUNNER.md for the rules and COMPETITION.md for the scoring. Then ';
+  const pre='Clone https://github.com/ktdmax/trashfire.git - read BENCHMARK_RUNNER.md for the rules (IMPORTANT: do not grep for BUG markers, do not read _manifests/, find bugs by actually reviewing the code). Run: cd _scoring && npm install && cd .. && bash _scoring/create-blind-copy.sh to create the clean test copy. Then ';
   if(currentTier==='quick'){
-    document.getElementById('prompt-box').textContent=`${pre}run the Standard Benchmark: review these 3 vaults one by one: vaults/grog-shop/, vaults/tentacle-labs/, vaults/lechuck-crypt/. For each vault, read every file and find all issues. Score each result against its encrypted manifest. Show me the report.`;
+    document.getElementById('prompt-box').textContent=`${pre}run the Standard Benchmark: review these 3 folders one by one: _blind/grog-shop/, _blind/tentacle-labs/, _blind/lechuck-crypt/. For each, read every file and find all issues by understanding the code. Score each result against its encrypted manifest in _manifests/. Show me the report.`;
   } else if(currentTier==='ultimate'){
-    document.getElementById('prompt-box').textContent=`${pre}run the Ultimate Benchmark: review every vault in vaults/ one by one (all 42). For each vault, read every file and find all issues. Score each result against its encrypted manifest. Show me the full report.`;
+    document.getElementById('prompt-box').textContent=`${pre}run the Ultimate Benchmark: review every folder in _blind/ one by one (all 42). For each, read every file and find all issues by understanding the code. Score each result against its encrypted manifest in _manifests/. Show me the full report.`;
   } else {
-    document.getElementById('prompt-box').textContent=`${pre}review the vault vaults/${v}/. Read every file and find all issues. Score the result against its encrypted manifest. Show me the report.`;
+    document.getElementById('prompt-box').textContent=`${pre}review _blind/${v}/. Read every file and find all issues by understanding the code. Score the result against _manifests/${v}.enc. Show me the report.`;
   }
 }
 

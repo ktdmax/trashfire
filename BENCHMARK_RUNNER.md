@@ -1,7 +1,19 @@
 # BENCHMARK_RUNNER.md
 
-Instructions for Claude Code on how to execute TRASHFIRE benchmark runs.
-Read this file before running any benchmark command.
+Instructions for executing TRASHFIRE benchmark runs.
+Read this file completely before running any benchmark.
+
+---
+
+## HARD RULES
+
+These are non-negotiable. Violations invalidate your result.
+
+1. **DO NOT grep, search, or parse BUG-XXX / RH-XXX marker comments.** That is cheating. Find bugs by reading and understanding the code.
+2. **DO NOT read _manifests/ files.** That is the encrypted answer key.
+3. **DO NOT use the vaults/ folder directly for review.** The source files contain bug marker comments. Use the blind copy (_blind/) or strip markers first.
+4. **You must actually review the code.** Read each file, understand the logic, find vulnerabilities through analysis - not pattern matching on annotations.
+5. **Cheating is obvious.** If your findings map 1:1 to marker comments, it will be caught immediately by the community.
 
 ---
 
