@@ -181,6 +181,36 @@
   <div class="pg" id="pj"></div>
 </section>
 
+<section>
+  <h2>Open Competition</h2>
+  <p class="sub">The vanilla results are in. Now it's your turn.</p>
+  <div style="background:var(--s);border:1px solid var(--b);border-radius:12px;padding:2rem;max-width:720px">
+    <p style="font-size:1.05rem;line-height:1.7;margin-bottom:1.5rem">
+      Build a skill, a prompt, or a workflow that finds more bugs than vanilla AI.
+      Share it openly. The best skill ships to the community and gets used in real code reviews.
+    </p>
+    <p style="font-size:.95rem;color:var(--m);line-height:1.7;margin-bottom:1.5rem">
+      100 planted bugs per project. 42 intentionally broken apps. One fair benchmark.
+      The best skill wins - and helps make the internet a bit harder to exploit.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.5rem">
+      <div style="display:flex;align-items:baseline;gap:.6rem">
+        <span style="color:var(--o);font-weight:700;font-size:1.1rem">1.</span>
+        <span><b>General purpose</b> <span style="color:var(--m)">- must work on any codebase, not just this one</span></span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.6rem">
+        <span style="color:var(--o);font-weight:700;font-size:1.1rem">2.</span>
+        <span><b>Public and open</b> <span style="color:var(--m)">- anyone can inspect, use, and build on it</span></span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:.6rem">
+        <span style="color:var(--o);font-weight:700;font-size:1.1rem">3.</span>
+        <span><b>Fair play</b> <span style="color:var(--m)">- no gaming the benchmark, no hard-coded findings</span></span>
+      </div>
+    </div>
+    <a href="https://github.com/ktdmax/trashfire/blob/main/COMPETITION.md" class="btn btn-p" target="_blank" style="text-decoration:none">Read the full rules & compete</a>
+  </div>
+</section>
+
 <footer>
   <div class="warn"><strong>Disclaimer:</strong> All code is AI-generated (Claude) and intentionally vulnerable. Do not use in production.</div>
   <a href="https://github.com/ktdmax/trashfire">GitHub</a> &middot; MIT License &middot; Made with 🔥 by AI
@@ -188,6 +218,7 @@
 
 <script>
 const D=[
+  {d:"Gemini 2.5 Pro",p:"google",pr:"vanilla",sk:[],sc:.731,f:92,t:100,fp:20,re:.92,pre:.82,c:{S:.866,L:1,P:0,B:0,M:.8,T:.921}},
   {d:"Claude Opus 4.6",p:"anthropic",pr:"thorough",sk:[],sc:.452,f:62,t:100,fp:27,re:.62,pre:.70,c:{S:.528,L:0,P:.938,B:0,M:.775,T:.768}},
   {d:"Claude Opus 4.6",p:"anthropic",pr:"vanilla",sk:[],sc:.411,f:57,t:100,fp:18,re:.57,pre:.76,c:{S:.496,L:0,P:.938,B:0,M:.775,T:.571}},
   {d:"Claude Opus 4.6",p:"anthropic",pr:"security",sk:[],sc:.377,f:57,t:100,fp:17,re:.57,pre:.77,c:{S:.506,L:0,P:.813,B:0,M:.775,T:.465}},
