@@ -3,232 +3,277 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TRASHFIRE Badge Generator</title>
+  <title>TRASHFIRE - Claim Your Badge</title>
   <link rel="icon" href="icon.svg">
   <style>
-    :root{--bg:#09090b;--s:#18181b;--s2:#27272a;--b:#3f3f46;--t:#fafafa;--m:#a1a1aa;--o:#f97316;--g:#22c55e;--r:#ef4444}
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+    :root{--bg:#0a0a12;--s:#151520;--s2:#1e1e2e;--b:#2a2a3d;--t:#e8e4d9;--m:#8884a0;--o:#f97316;--g:#4ade80;--r:#ef4444;--gold:#fbbf24;--parchment:#2c2820;--ink:#e8e4d9}
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t);padding:2rem;line-height:1.5}
-    h1{font-size:1.8rem;font-weight:800;margin-bottom:.3rem}
+    body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--t);padding:2rem;line-height:1.5;min-height:100vh}
+
+    h1{font-family:'Press Start 2P',monospace;font-size:1.2rem;margin-bottom:.5rem;letter-spacing:1px}
     h1 em{color:var(--o);font-style:normal}
-    .sub{color:var(--m);margin-bottom:2rem}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;max-width:900px}
-    @media(max-width:700px){.grid{grid-template-columns:1fr}}
+    .sub{color:var(--m);margin-bottom:2.5rem;font-size:.9rem}
 
-    .form{display:flex;flex-direction:column;gap:1rem}
-    label{font-size:.8rem;color:var(--m);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
-    input,select{background:var(--s);border:1px solid var(--b);border-radius:8px;padding:.6rem .8rem;color:var(--t);font-size:.9rem;outline:none}
-    input:focus,select:focus{border-color:var(--o)}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    .layout{max-width:860px;margin:0 auto}
 
-    .preview{display:flex;flex-direction:column;align-items:center;gap:1.5rem}
-    .badge-wrap{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:2rem;display:flex;justify-content:center}
+    /* Upload zone */
+    .upload{border:2px dashed var(--b);border-radius:12px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:2rem}
+    .upload:hover{border-color:var(--o);background:rgba(249,115,22,.03)}
+    .upload.active{border-color:var(--g);background:rgba(74,222,128,.03)}
+    .upload-icon{font-size:2rem;margin-bottom:.5rem}
+    .upload-text{color:var(--m);font-size:.9rem}
+    .upload-text b{color:var(--t)}
+    .upload input{display:none}
+    .upload-hint{font-size:.75rem;color:var(--m);margin-top:.75rem;font-family:monospace}
+
+    /* Badge preview */
+    .preview{display:none;flex-direction:column;align-items:center;gap:1.5rem}
+    .preview.show{display:flex}
+    .badge-frame{position:relative;padding:8px;border-radius:4px;image-rendering:pixelated}
+
+    /* Buttons */
     .actions{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
-    .btn{padding:.5rem 1.2rem;border-radius:8px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;transition:all .15s}
-    .btn-p{background:var(--o);color:#fff}.btn-p:hover{opacity:.9}
-    .btn-s{background:var(--s);color:var(--t);border:1px solid var(--b)}.btn-s:hover{border-color:var(--m)}
+    .btn{padding:.6rem 1.2rem;border-radius:6px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:.6rem;letter-spacing:.5px;transition:all .15s}
+    .btn-o{background:var(--o);color:#fff}.btn-o:hover{opacity:.85}
+    .btn-g{background:var(--s2);color:var(--t);border:1px solid var(--b)}.btn-g:hover{border-color:var(--m)}
 
-    .cats{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.25rem}
-    .cat-btn{padding:.25rem .6rem;border-radius:6px;font-size:.72rem;font-weight:600;border:1px solid var(--b);background:var(--s2);color:var(--m);cursor:pointer}
-    .cat-btn.active{background:var(--o);color:#fff;border-color:var(--o)}
+    .verify{margin-top:1rem;font-family:monospace;font-size:.7rem;color:var(--m);text-align:center}
+    .verify code{background:var(--s2);padding:.2rem .5rem;border-radius:4px;color:var(--gold)}
+
+    .error{color:var(--r);font-size:.85rem;margin-top:1rem;text-align:center;display:none}
   </style>
 </head>
 <body>
 
-<h1><em>TRASHFIRE</em> Badge Generator</h1>
-<p class="sub">Create a shareable badge for your benchmark result.</p>
+<div class="layout">
+  <h1><em>TRASHFIRE</em> BADGE</h1>
+  <p class="sub">Drop your result.json to claim your badge. No faking - verified from run data.</p>
 
-<div class="grid">
-  <div class="form">
-    <div>
-      <label>Model</label>
-      <input id="model" value="Claude Opus 4.6" placeholder="Model name">
+  <div class="upload" id="dropzone" onclick="document.getElementById('file-input').click()">
+    <div class="upload-icon">📂</div>
+    <div class="upload-text">
+      <b>Drop result.json here</b> or click to browse
     </div>
-    <div>
-      <label>Skill / Prompt</label>
-      <input id="skill" value="vanilla" placeholder="Skill name or prompt preset">
-    </div>
-    <div class="row">
-      <div>
-        <label>Score (%)</label>
-        <input id="score" type="number" value="45.2" min="0" max="100" step="0.1">
-      </div>
-      <div>
-        <label>Found / Total</label>
-        <input id="found" value="62/100" placeholder="62/100">
-      </div>
-    </div>
-    <div>
-      <label>Project</label>
-      <select id="project">
-        <option value="overall">Overall (all projects)</option>
-        <option value="grog-shop" selected>grog-shop</option>
-        <option value="tentacle-labs">tentacle-labs</option>
-        <option value="scumm-bar">scumm-bar</option>
-        <option value="manny-travel">manny-travel</option>
-        <option value="sam-max-cases">sam-max-cases</option>
-        <option value="full-throttle">full-throttle</option>
-        <option value="loom-weaver">loom-weaver</option>
-        <option value="zak-mckracken">zak-mckracken</option>
-      </select>
-    </div>
-    <div>
-      <label>Category (optional - for category wins)</label>
-      <div class="cats">
-        <button class="cat-btn" data-cat="" onclick="setCat(this)">Overall</button>
-        <button class="cat-btn" data-cat="SEC" onclick="setCat(this)">Security</button>
-        <button class="cat-btn" data-cat="LOGIC" onclick="setCat(this)">Logic</button>
-        <button class="cat-btn" data-cat="PERF" onclick="setCat(this)">Performance</button>
-        <button class="cat-btn" data-cat="TRICKY" onclick="setCat(this)">Tricky</button>
-        <button class="cat-btn" data-cat="BP" onclick="setCat(this)">Best Practice</button>
-        <button class="cat-btn" data-cat="SMELL" onclick="setCat(this)">Code Smell</button>
-      </div>
-    </div>
-    <div>
-      <label>Style</label>
-      <div class="cats">
-        <button class="cat-btn active" data-style="dark" onclick="setStyle(this)">Dark</button>
-        <button class="cat-btn" data-style="light" onclick="setStyle(this)">Light</button>
-      </div>
-    </div>
+    <div class="upload-hint">_results/&lt;run-id&gt;/result.json or any scored report JSON</div>
+    <input type="file" id="file-input" accept=".json">
   </div>
-  <div class="preview">
-    <div class="badge-wrap" id="badge-container"></div>
+
+  <div class="error" id="error"></div>
+
+  <div class="preview" id="preview">
+    <div class="badge-frame" id="badge-container"></div>
     <div class="actions">
-      <button class="btn btn-p" onclick="downloadSVG()">Download SVG</button>
-      <button class="btn btn-s" onclick="downloadPNG()">Download PNG</button>
-      <button class="btn btn-s" onclick="copyEmbed()">Copy Embed</button>
+      <button class="btn btn-o" onclick="downloadPNG()">DOWNLOAD PNG</button>
+      <button class="btn btn-g" onclick="downloadSVG()">DOWNLOAD SVG</button>
     </div>
+    <div class="verify" id="verify-line"></div>
   </div>
 </div>
 
 <script>
-let currentCat = "";
-let currentStyle = "dark";
+// ── Drag & Drop ──
+const dz = document.getElementById('dropzone');
+const fi = document.getElementById('file-input');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('active'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('active'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('active'); handleFile(e.dataTransfer.files[0]); });
+fi.addEventListener('change', () => { if(fi.files[0]) handleFile(fi.files[0]); });
 
-function setCat(el) {
-  document.querySelectorAll('.cat-btn[data-cat]').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  currentCat = el.dataset.cat;
-  render();
+function handleFile(f) {
+  const err = document.getElementById('error');
+  err.style.display = 'none';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      generateBadge(data);
+    } catch(ex) {
+      err.textContent = 'Invalid JSON: ' + ex.message;
+      err.style.display = 'block';
+    }
+  };
+  reader.readAsText(f);
 }
-function setStyle(el) {
-  document.querySelectorAll('.cat-btn[data-style]').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  currentStyle = el.dataset.style;
-  render();
+
+// ── Verification Hash ──
+async function hashData(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0,12);
 }
 
-function scoreColor(s) {
-  if (s >= 70) return "#22c55e";
-  if (s >= 40) return "#f97316";
-  return "#ef4444";
+// ── Score tier ──
+function tier(s) {
+  if (s >= 80) return { label: "LEGENDARY", color: "#fbbf24", stars: 5 };
+  if (s >= 60) return { label: "EPIC", color: "#a78bfa", stars: 4 };
+  if (s >= 40) return { label: "SKILLED", color: "#4ade80", stars: 3 };
+  if (s >= 20) return { label: "NOVICE", color: "#60a5fa", stars: 2 };
+  return { label: "ROOKIE", color: "#8884a0", stars: 1 };
 }
 
-function generateSVG() {
-  const model = document.getElementById("model").value || "Model";
-  const skill = document.getElementById("skill").value || "vanilla";
-  const score = parseFloat(document.getElementById("score").value) || 0;
-  const found = document.getElementById("found").value || "0/100";
-  const project = document.getElementById("project").value;
-  const cat = currentCat;
-  const dark = currentStyle === "dark";
+// ── Generate Badge SVG ──
+async function generateBadge(data) {
+  // Parse data - support both ProjectScoreReport and BenchmarkResult formats
+  let model, skill, score, found, total, fp, project, cats;
 
-  const bg = dark ? "#18181b" : "#ffffff";
-  const bg2 = dark ? "#27272a" : "#f4f4f5";
-  const border = dark ? "#3f3f46" : "#d4d4d8";
-  const text = dark ? "#fafafa" : "#09090b";
-  const muted = dark ? "#a1a1aa" : "#71717a";
-  const sc = scoreColor(score);
+  if (data.meta) {
+    // BenchmarkResult format
+    model = data.meta.model_display || data.meta.model || "Unknown";
+    skill = data.meta.prompt_preset || "custom";
+    score = (data.aggregate?.composite_score ?? 0) * 100;
+    found = data.aggregate?.total_found ?? 0;
+    total = data.aggregate?.total_issues ?? 100;
+    fp = data.aggregate?.total_false_positives ?? 0;
+    project = data.projects?.length > 1 ? "overall" : (data.projects?.[0]?.project ?? "unknown");
+    cats = {};
+  } else if (data.composite_score !== undefined) {
+    // ProjectScoreReport format
+    model = data.reviewer || "Unknown";
+    skill = "scored";
+    score = data.composite_score * 100;
+    found = data.matched_issues ?? 0;
+    total = data.total_issues ?? 100;
+    fp = data.false_positives ?? 0;
+    project = data.project || "unknown";
+    cats = {};
+    if (data.by_category) {
+      Object.entries(data.by_category).forEach(([k,v]) => { cats[k] = v.normalized_score ?? v.recall ?? 0; });
+    }
+  } else if (data.reviewer && data.findings) {
+    // Raw review output - can't generate badge from unscored data
+    document.getElementById('error').textContent = "This is a raw review file (not scored). Run the scorer first, then use the report JSON.";
+    document.getElementById('error').style.display = 'block';
+    return;
+  } else {
+    document.getElementById('error').textContent = "Unrecognized format. Use a result.json from _results/ or a scored report JSON.";
+    document.getElementById('error').style.display = 'block';
+    return;
+  }
 
-  const w = 420, h = 180;
-  const catLabel = cat ? ` / ${cat}` : "";
-  const projectLabel = project === "overall" ? "Overall" : project;
-  const barW = Math.max(0, Math.min(score, 100)) / 100 * 260;
+  const t = tier(score);
+  const verifyStr = `${model}|${skill}|${score.toFixed(1)}|${found}/${total}|${project}`;
+  const hash = await hashData(JSON.stringify(data));
 
-  // Pixel fire icon (simplified)
-  const fireIcon = `
-    <rect fill="#f97316" x="14" y="8" width="4" height="4"/>
-    <rect fill="#fb923c" x="18" y="10" width="3" height="3"/>
-    <rect fill="#fbbf24" x="16" y="10" width="2" height="2"/>
-    <rect fill="#3f3f46" x="12" y="14" width="12" height="10"/>
-    <rect fill="#52525b" x="14" y="16" width="2" height="6"/>
-    <rect fill="#52525b" x="19" y="16" width="2" height="6"/>
-    <rect fill="#f97316" x="12" y="24" width="4" height="4"/>
-    <rect fill="#fb923c" x="16" y="25" width="4" height="4"/>
-    <rect fill="#fbbf24" x="20" y="24" width="4" height="3"/>
-  `;
+  const w = 480, h = 260;
+  const stars = "★".repeat(t.stars) + "☆".repeat(5 - t.stars);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-  <rect width="${w}" height="${h}" rx="16" fill="${bg}" stroke="${border}" stroke-width="1"/>
+  // Category bars (if available)
+  const catKeys = ["SEC","LOGIC","PERF","BP","SMELL","TRICKY"];
+  const catLabels = {SEC:"SEC",LOGIC:"LOG",PERF:"PRF",BP:"BP",SMELL:"SML",TRICKY:"TRK"};
+  const catColors = {SEC:"#ef4444",LOGIC:"#60a5fa",PERF:"#fbbf24",BP:"#a78bfa",SMELL:"#6b7280",TRICKY:"#f97316"};
+  const hasCats = catKeys.some(k => (cats[k] ?? 0) > 0);
 
-  <!-- Icon -->
-  <g transform="translate(16,12) scale(1.2)">${fireIcon}</g>
+  const catBars = hasCats ? catKeys.map((k, i) => {
+    const v = cats[k] ?? 0;
+    const x = 24 + i * 72;
+    return `
+      <text x="${x+22}" y="208" font-family="'Press Start 2P',monospace" font-size="5" fill="#6b6b80" text-anchor="middle">${catLabels[k]}</text>
+      <rect x="${x}" y="214" width="44" height="5" rx="1" fill="#1a1a2e"/>
+      <rect x="${x}" y="214" width="${Math.max(1, v * 44)}" height="5" rx="1" fill="${catColors[k]}"/>
+      <text x="${x+22}" y="228" font-family="'Press Start 2P',monospace" font-size="5" fill="${v > 0 ? catColors[k] : '#333'}" text-anchor="middle">${Math.round(v*100)}</text>
+    `;
+  }).join('') : '';
 
-  <!-- TRASHFIRE -->
-  <text x="60" y="34" font-family="monospace" font-size="13" font-weight="800" fill="#f97316">TRASH</text>
-  <text x="113" y="34" font-family="monospace" font-size="13" font-weight="800" fill="${text}">FIRE</text>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <defs>
+    <filter id="crt"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="0.5" xChannelSelector="R" yChannelSelector="G"/></filter>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,0.03)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></linearGradient>
+  </defs>
 
-  <!-- Model + Skill -->
-  <text x="24" y="62" font-family="sans-serif" font-size="16" font-weight="700" fill="${text}">${model}</text>
-  <text x="24" y="82" font-family="sans-serif" font-size="12" fill="${muted}">${skill}${catLabel} - ${projectLabel}</text>
+  <!-- Outer pixel border -->
+  <rect x="0" y="0" width="${w}" height="${h}" rx="2" fill="#0e0e18"/>
+  <rect x="2" y="2" width="${w-4}" height="${h-4}" rx="1" fill="${t.color}" opacity="0.15"/>
+  <rect x="4" y="4" width="${w-8}" height="${h-8}" rx="1" fill="#12121e"/>
+  <rect x="6" y="6" width="${w-12}" height="${h-12}" fill="#151522"/>
+  <rect x="6" y="6" width="${w-12}" height="${h-12}" fill="url(#shine)"/>
+
+  <!-- Corner pixels -->
+  <rect x="4" y="4" width="4" height="4" fill="${t.color}" opacity="0.4"/>
+  <rect x="${w-8}" y="4" width="4" height="4" fill="${t.color}" opacity="0.4"/>
+  <rect x="4" y="${h-8}" width="4" height="4" fill="${t.color}" opacity="0.4"/>
+  <rect x="${w-8}" y="${h-8}" width="4" height="4" fill="${t.color}" opacity="0.4"/>
+
+  <!-- Header bar -->
+  <rect x="6" y="6" width="${w-12}" height="28" fill="#1a1a2e"/>
+  <line x1="6" y1="34" x2="${w-6}" y2="34" stroke="${t.color}" stroke-width="1" opacity="0.3"/>
+
+  <!-- Pixel fire icon -->
+  <rect fill="#f97316" x="14" y="12" width="4" height="4"/>
+  <rect fill="#fb923c" x="18" y="14" width="3" height="3"/>
+  <rect fill="#fbbf24" x="16" y="14" width="2" height="2"/>
+  <rect fill="#3f3f46" x="12" y="18" width="10" height="8"/>
+  <rect fill="#52525b" x="14" y="20" width="2" height="4"/>
+  <rect fill="#52525b" x="18" y="20" width="2" height="4"/>
+
+  <!-- TRASHFIRE header -->
+  <text x="30" y="24" font-family="'Press Start 2P',monospace" font-size="8" fill="#f97316">TRASH</text>
+  <text x="75" y="24" font-family="'Press Start 2P',monospace" font-size="8" fill="${t.color}">FIRE</text>
+
+  <!-- Tier label -->
+  <text x="${w-20}" y="24" font-family="'Press Start 2P',monospace" font-size="7" fill="${t.color}" text-anchor="end" opacity="0.5">${t.label}</text>
+
+  <!-- Stars -->
+  <text x="24" y="54" font-family="sans-serif" font-size="16" fill="${t.color}" letter-spacing="3">${stars}</text>
+
+  <!-- Model name -->
+  <text x="24" y="80" font-family="'Press Start 2P',monospace" font-size="10" fill="${t.color}">${model}</text>
+
+  <!-- Skill + project -->
+  <text x="24" y="98" font-family="monospace" font-size="10" fill="#6b6b80">${skill} // ${project}</text>
 
   <!-- Score -->
-  <text x="24" y="116" font-family="sans-serif" font-size="36" font-weight="800" fill="${sc}">${score.toFixed(1)}%</text>
+  <text x="24" y="142" font-family="'Press Start 2P',monospace" font-size="32" fill="${t.color}" letter-spacing="2">${score.toFixed(1)}<tspan font-size="18" dy="-4">%</tspan></text>
 
-  <!-- Bar -->
-  <rect x="24" y="132" width="260" height="8" rx="4" fill="${bg2}"/>
-  <rect x="24" y="132" width="${barW}" height="8" rx="4" fill="${sc}"/>
+  <!-- Score bar -->
+  <rect x="24" y="154" width="320" height="8" rx="2" fill="#1a1a2e"/>
+  <rect x="24" y="154" width="${Math.max(2, score/100*320)}" height="8" rx="2" fill="${t.color}"/>
 
-  <!-- Found -->
-  <text x="300" y="116" font-family="monospace" font-size="13" font-weight="600" fill="${text}">${found}</text>
-  <text x="300" y="132" font-family="sans-serif" font-size="10" fill="${muted}">found</text>
+  <!-- Found / FP -->
+  <text x="360" y="132" font-family="'Press Start 2P',monospace" font-size="12" fill="${t.color}">${found}<tspan font-size="7" fill="#6b6b80">/${total}</tspan></text>
+  <text x="360" y="146" font-family="monospace" font-size="8" fill="#6b6b80">found</text>
+  <text x="420" y="146" font-family="monospace" font-size="8" fill="${fp > 20 ? '#ef4444' : '#6b6b80'}">${fp} FP</text>
 
-  <!-- Rank marker -->
-  <rect x="300" y="140" width="96" height="24" rx="6" fill="${bg2}" stroke="${border}" stroke-width="1"/>
-  <text x="348" y="157" font-family="monospace" font-size="10" font-weight="600" fill="${muted}" text-anchor="middle">trashfire.io</text>
+  <!-- Category mini-bars -->
+  ${catBars}
+
+  <!-- Verification hash -->
+  <text x="${w-20}" y="${h-14}" font-family="monospace" font-size="7" fill="#333" text-anchor="end">verify: ${hash}</text>
+
+  <!-- trashfire.io -->
+  <text x="24" y="${h-14}" font-family="'Press Start 2P',monospace" font-size="6" fill="#4a4a5e">trashfire.io</text>
 </svg>`;
-}
 
-function render() {
-  document.getElementById("badge-container").innerHTML = generateSVG();
+  document.getElementById('badge-container').innerHTML = svg;
+  document.getElementById('preview').classList.add('show');
+  document.getElementById('verify-line').innerHTML = `Verification hash: <code>${hash}</code> (derived from result data)`;
+
+  // Store SVG for downloads
+  window._currentSVG = svg;
 }
 
 function downloadSVG() {
-  const svg = generateSVG();
-  const blob = new Blob([svg], { type: "image/svg+xml" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "trashfire-badge.svg";
+  if (!window._currentSVG) return;
+  const a = document.createElement('a');
+  a.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(window._currentSVG);
+  a.download = 'trashfire-badge.svg';
   a.click();
 }
 
 function downloadPNG() {
-  const svg = generateSVG();
-  const canvas = document.createElement("canvas");
-  canvas.width = 840; canvas.height = 360; // 2x for retina
-  const ctx = canvas.getContext("2d");
+  if (!window._currentSVG) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = 960; canvas.height = 520;
+  const ctx = canvas.getContext('2d');
   const img = new Image();
   img.onload = () => {
-    ctx.drawImage(img, 0, 0, 840, 360);
-    const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
-    a.download = "trashfire-badge.png";
+    ctx.drawImage(img, 0, 0, 960, 520);
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'trashfire-badge.png';
     a.click();
   };
-  img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
+  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(window._currentSVG)));
 }
-
-function copyEmbed() {
-  const model = document.getElementById("model").value;
-  const score = document.getElementById("score").value;
-  const embed = `[![TRASHFIRE ${score}%](https://trashfire.io/api/badge?model=${encodeURIComponent(model)}&score=${score})](https://trashfire.io)`;
-  navigator.clipboard.writeText(embed).then(() => alert("Copied markdown embed!"));
-}
-
-// Auto-update
-document.querySelectorAll("input, select").forEach(el => el.addEventListener("input", render));
-render();
 </script>
 </body>
 </html>
