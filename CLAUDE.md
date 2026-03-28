@@ -232,7 +232,48 @@ Penalties: -1.0 per false positive, -2.0 per flagged red herring
 - `// BUG-XXXX:` comments stripped for blind testing
 - Snippet hashes in manifest for tamper detection
 
+## Benchmark Runner
+
+Before running any benchmark, read `BENCHMARK_RUNNER.md` in full.
+That file defines the protocol. This section is just the entry point.
+
+### Running a test
+
+```bash
+# Vanilla (no skill)
+run benchmark vanilla --project grog-shop
+
+# With one Supaskills skill
+run benchmark --skill supaskills:security-code-reviewer --project grog-shop
+
+# With a local skill file
+run benchmark --skill ./my-skill.md --project grog-shop
+
+# With multiple skills combined
+run benchmark --skills supaskills:security-code-reviewer,supaskills:vuln-hunter --project grog-shop
+
+# All projects, vanilla
+run benchmark --all
+
+# Compare all runs for a project
+compare runs --project grog-shop
+
+# Prepare a leaderboard submission
+submit result --run <run-id> --project grog-shop
+```
+
+### Fair play rules (enforced always)
+
+1. Every run for the same project uses the same canonical prompt - built once,
+   stored in `_runs/<project>/canonical_prompt.txt`, never modified between runs.
+2. BUG-XXX marker comments are stripped from source before the prompt is built.
+   The reviewer never sees them.
+3. Manifests in `_manifests/` are never read during the review phase.
+4. Skills are loaded verbatim - not summarised, not modified.
+5. Vanilla runs have zero system context additions.
+6. A run that violated any of these rules cannot be submitted to the leaderboard.
+
 ## MCP Integration
 
 - **SupaSkills** for security expertise: `claude mcp add supaskills --transport http -H "Authorization: Bearer YOUR_KEY" -- https://www.supaskills.ai/mcp`
-- **Context7** for framework docs (active): `claude mcp add context7 -- npx -y @upstash/context7-mcp@latest`  - append `use context7` to prompts when writing framework-specific code to pull current docs and ensure vulnerability patterns match real framework behavior
+- **Context7** for framework docs (active): `claude mcp add context7 -- npx -y @upstash/context7-mcp@latest` - append `use context7` to prompts when writing framework-specific code to pull current docs and ensure vulnerability patterns match real framework behavior
