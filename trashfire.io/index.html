@@ -146,6 +146,13 @@
 </div>
 
 <section>
+  <h2>Try it now</h2>
+  <p class="sub">Copy this into any AI coding tool (Claude Code, Codex, Gemini, Cursor, ...):</p>
+  <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:10px;padding:1.2rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--m);max-width:720px;white-space:pre-wrap;word-break:break-word" id="prompt-box">Clone https://github.com/ktdmax/trashfire.git and run the benchmark on grog-shop. Read BENCHMARK_RUNNER.md for the protocol. Review every file in vaults/grog-shop/, find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. Output findings as JSON. Score against _manifests/grog-shop.enc (passphrase: monkey). Show me the report.</div>
+  <button onclick="navigator.clipboard.writeText(document.getElementById('prompt-box').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy prompt',1500)" style="margin-top:.75rem;padding:.45rem 1rem;border-radius:6px;font-size:.78rem;font-weight:600;background:var(--o);color:#fff;border:none;cursor:pointer;font-family:monospace">Copy prompt</button>
+</section>
+
+<section>
   <h2>How it works</h2>
   <p class="sub">Three commands. One score. Zero excuses.</p>
   <div class="term">
