@@ -120,6 +120,22 @@ The best submissions will:
 | **Best Focused** | Highest score on any single vault |
 | **Ultimate Champion** | Highest average across all 42 vaults |
 
+## The Benchmark Gets Better Over Time
+
+All code in TRASHFIRE is AI-generated. That means there are bugs we didn't plan for.
+
+Every submission helps us find them. Here's how:
+
+- Your "false positives" might be **real bugs we missed**. If 3+ reviewers flag the same issue and it's not in our manifest, we investigate.
+- If confirmed, it gets added to the manifest and all scores are recalculated.
+- If a planted bug turns out to be unrealistic ("no developer would ever write this"), it gets removed.
+
+The benchmark is self-improving. More submissions = better ground truth = fairer scores for everyone.
+
+You're not just competing. You're making the benchmark better.
+
+Report vault issues directly: [Vault Feedback](https://github.com/ktdmax/trashfire/issues/new/choose)
+
 ## Why This Matters
 
 Every day, millions of lines of code ship with bugs that AI could have caught. The tools exist. The models are good enough. What's missing is the right instructions.
