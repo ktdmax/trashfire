@@ -3,277 +3,276 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TRASHFIRE - Claim Your Badge</title>
+  <title>TRASHFIRE Badge</title>
   <link rel="icon" href="icon.svg">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-    :root{--bg:#0a0a12;--s:#151520;--s2:#1e1e2e;--b:#2a2a3d;--t:#e8e4d9;--m:#8884a0;--o:#f97316;--g:#4ade80;--r:#ef4444;--gold:#fbbf24;--parchment:#2c2820;--ink:#e8e4d9}
+    :root{--bg:#09090b;--s:#151520;--s2:#1e1e2e;--b:#2a2a3d;--t:#e8e4d9;--m:#8884a0;--o:#f97316;--g:#4ade80;--r:#ef4444;--gold:#fbbf24}
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--t);padding:2rem;line-height:1.5;min-height:100vh}
-
-    h1{font-family:'Press Start 2P',monospace;font-size:1.2rem;margin-bottom:.5rem;letter-spacing:1px}
+    body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--t);padding:2rem;line-height:1.5}
+    .wrap{max-width:540px;margin:0 auto}
+    h1{font-family:'Press Start 2P',monospace;font-size:1rem;margin-bottom:.3rem;letter-spacing:1px}
     h1 em{color:var(--o);font-style:normal}
-    .sub{color:var(--m);margin-bottom:2.5rem;font-size:.9rem}
+    .sub{color:var(--m);margin-bottom:2rem;font-size:.85rem}
+    a{color:var(--o)}
 
-    .layout{max-width:860px;margin:0 auto}
+    /* Tabs */
+    .tabs{display:flex;gap:0;margin-bottom:2rem;border-bottom:1px solid var(--b)}
+    .tab{padding:.6rem 1.2rem;font-size:.8rem;font-weight:600;color:var(--m);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+    .tab:hover{color:var(--t)}
+    .tab.on{color:var(--o);border-bottom-color:var(--o)}
+    .panel{display:none}.panel.on{display:block}
 
-    /* Upload zone */
-    .upload{border:2px dashed var(--b);border-radius:12px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:2rem}
-    .upload:hover{border-color:var(--o);background:rgba(249,115,22,.03)}
-    .upload.active{border-color:var(--g);background:rgba(74,222,128,.03)}
-    .upload-icon{font-size:2rem;margin-bottom:.5rem}
-    .upload-text{color:var(--m);font-size:.9rem}
-    .upload-text b{color:var(--t)}
-    .upload input{display:none}
-    .upload-hint{font-size:.75rem;color:var(--m);margin-top:.75rem;font-family:monospace}
+    /* Form */
+    .field{margin-bottom:1rem}
+    .field label{display:block;font-size:.7rem;color:var(--m);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:.3rem}
+    .field input,.field select{width:100%;background:var(--s);border:1px solid var(--b);border-radius:6px;padding:.5rem .7rem;color:var(--t);font-size:.85rem;outline:none}
+    .field input:focus{border-color:var(--o)}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
 
     /* Badge preview */
-    .preview{display:none;flex-direction:column;align-items:center;gap:1.5rem}
-    .preview.show{display:flex}
-    .badge-frame{position:relative;padding:8px;border-radius:4px;image-rendering:pixelated}
-
-    /* Buttons */
-    .actions{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
-    .btn{padding:.6rem 1.2rem;border-radius:6px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:.6rem;letter-spacing:.5px;transition:all .15s}
+    .badge-area{margin:1.5rem 0;display:flex;justify-content:center}
+    .actions{display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem}
+    .btn{padding:.5rem 1rem;border-radius:6px;font-size:.75rem;font-weight:600;border:none;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:.55rem;letter-spacing:.5px}
     .btn-o{background:var(--o);color:#fff}.btn-o:hover{opacity:.85}
     .btn-g{background:var(--s2);color:var(--t);border:1px solid var(--b)}.btn-g:hover{border-color:var(--m)}
 
-    .verify{margin-top:1rem;font-family:monospace;font-size:.7rem;color:var(--m);text-align:center}
-    .verify code{background:var(--s2);padding:.2rem .5rem;border-radius:4px;color:var(--gold)}
+    /* Verify */
+    .verify-input{display:flex;gap:.5rem;margin-bottom:1rem}
+    .verify-input input{flex:1}
+    .verify-result{padding:1rem;border-radius:8px;font-size:.85rem;display:none}
+    .verify-result.ok{display:block;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);color:var(--g)}
+    .verify-result.fail{display:block;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--r)}
+    .verify-result.pending{display:block;background:rgba(136,132,160,.08);border:1px solid rgba(136,132,160,.2);color:var(--m)}
 
-    .error{color:var(--r);font-size:.85rem;margin-top:1rem;text-align:center;display:none}
+    .note{font-size:.75rem;color:var(--m);margin-top:1rem;padding:.75rem;background:var(--s);border-radius:6px;border:1px solid var(--b)}
+    .note b{color:var(--t)}
   </style>
 </head>
 <body>
 
-<div class="layout">
-  <h1><em>TRASHFIRE</em> BADGE</h1>
-  <p class="sub">Drop your result.json to claim your badge. No faking - verified from run data.</p>
+<div class="wrap">
+  <h1><em>TRASH</em>FIRE BADGE</h1>
+  <p class="sub">Claim your score. Anyone can verify it.</p>
 
-  <div class="upload" id="dropzone" onclick="document.getElementById('file-input').click()">
-    <div class="upload-icon">📂</div>
-    <div class="upload-text">
-      <b>Drop result.json here</b> or click to browse
-    </div>
-    <div class="upload-hint">_results/&lt;run-id&gt;/result.json or any scored report JSON</div>
-    <input type="file" id="file-input" accept=".json">
+  <div class="tabs">
+    <div class="tab on" onclick="showTab('create')">Create</div>
+    <div class="tab" onclick="showTab('verify')">Verify</div>
   </div>
 
-  <div class="error" id="error"></div>
-
-  <div class="preview" id="preview">
-    <div class="badge-frame" id="badge-container"></div>
-    <div class="actions">
-      <button class="btn btn-o" onclick="downloadPNG()">DOWNLOAD PNG</button>
-      <button class="btn btn-g" onclick="downloadSVG()">DOWNLOAD SVG</button>
+  <!-- CREATE TAB -->
+  <div class="panel on" id="p-create">
+    <div class="field"><label>Model</label><input id="f-model" value="Claude Opus 4.6" oninput="render()"></div>
+    <div class="field"><label>Skill / Prompt</label><input id="f-skill" value="vanilla" oninput="render()"></div>
+    <div class="row">
+      <div class="field"><label>Score (%)</label><input id="f-score" type="number" value="45.2" step="0.1" oninput="render()"></div>
+      <div class="field"><label>Found / Total</label><input id="f-found" value="62/100" oninput="render()"></div>
     </div>
-    <div class="verify" id="verify-line"></div>
+    <div class="row">
+      <div class="field"><label>Project</label>
+        <select id="f-project" onchange="render()">
+          <option value="overall">Overall</option>
+          <option value="grog-shop" selected>grog-shop</option>
+          <option value="tentacle-labs">tentacle-labs</option>
+          <option value="scumm-bar">scumm-bar</option>
+          <option value="manny-travel">manny-travel</option>
+          <option value="sam-max-cases">sam-max-cases</option>
+          <option value="full-throttle">full-throttle</option>
+          <option value="loom-weaver">loom-weaver</option>
+          <option value="zak-mckracken">zak-mckracken</option>
+        </select>
+      </div>
+      <div class="field"><label>False Positives</label><input id="f-fp" type="number" value="27" oninput="render()"></div>
+    </div>
+
+    <div class="badge-area" id="badge-area"></div>
+
+    <div class="actions">
+      <button class="btn btn-o" onclick="dlPNG()">DOWNLOAD PNG</button>
+      <button class="btn btn-g" onclick="dlSVG()">DOWNLOAD SVG</button>
+    </div>
+
+    <div class="note">
+      <b>How verification works:</b> Every badge has a verify code (bottom right).
+      The code is a hash of your result data. Anyone can check it at
+      <a href="badge.html">trashfire.io/badge</a> > Verify tab.
+      A badge is only "verified" if a matching run exists in the
+      <a href="https://github.com/ktdmax/trashfire/tree/main/_leaderboard">public leaderboard</a>.
+      Unverified badges still show your score - they just haven't been confirmed yet.
+    </div>
+  </div>
+
+  <!-- VERIFY TAB -->
+  <div class="panel" id="p-verify">
+    <p style="color:var(--m);margin-bottom:1rem;font-size:.9rem">
+      Paste a badge verify code to check if it matches a submitted run.
+    </p>
+    <div class="verify-input">
+      <input id="v-code" placeholder="e.g. TF-a3f8c1e2b907">
+      <button class="btn btn-o" onclick="verifyCode()">CHECK</button>
+    </div>
+
+    <div class="verify-result" id="v-result"></div>
+
+    <div class="note" style="margin-top:1.5rem">
+      <b>Where to find the code:</b> It's printed on the bottom right of every badge,
+      starting with <code style="color:var(--o)">TF-</code> followed by 12 hex characters.<br><br>
+      <b>What "verified" means:</b> The code matches a run that was submitted as a PR
+      to the <a href="https://github.com/ktdmax/trashfire">TRASHFIRE repo</a> and
+      accepted by maintainers. The full result data, skill text, and canonical prompt hash
+      are all public and reproducible.<br><br>
+      <b>What "unverified" means:</b> The code doesn't match any submitted run.
+      The badge may still be real (just not submitted yet), or it may be fabricated.
+    </div>
   </div>
 </div>
 
 <script>
-// ── Drag & Drop ──
-const dz = document.getElementById('dropzone');
-const fi = document.getElementById('file-input');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('active'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('active'));
-dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('active'); handleFile(e.dataTransfer.files[0]); });
-fi.addEventListener('change', () => { if(fi.files[0]) handleFile(fi.files[0]); });
+// ── Verified runs (fetched from repo or embedded at build time) ──
+// In production this would fetch from _leaderboard/global.json
+const VERIFIED = {
+  // hash -> { model, skill, score, project, date, run_id }
+};
 
-function handleFile(f) {
-  const err = document.getElementById('error');
-  err.style.display = 'none';
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      generateBadge(data);
-    } catch(ex) {
-      err.textContent = 'Invalid JSON: ' + ex.message;
-      err.style.display = 'block';
-    }
-  };
-  reader.readAsText(f);
+// ── Tabs ──
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.textContent.toLowerCase().includes(id)));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === 'p-'+id));
 }
 
-// ── Verification Hash ──
-async function hashData(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0,12);
+// ── Verify code generation ──
+async function makeCode(model, skill, score, found, project, fp) {
+  const raw = [model, skill, score, found, project, fp, "trashfire"].join("|");
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+  return "TF-" + Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0,12);
 }
 
-// ── Score tier ──
+// ── Tier ──
 function tier(s) {
-  if (s >= 80) return { label: "LEGENDARY", color: "#fbbf24", stars: 5 };
-  if (s >= 60) return { label: "EPIC", color: "#a78bfa", stars: 4 };
-  if (s >= 40) return { label: "SKILLED", color: "#4ade80", stars: 3 };
-  if (s >= 20) return { label: "NOVICE", color: "#60a5fa", stars: 2 };
-  return { label: "ROOKIE", color: "#8884a0", stars: 1 };
+  if (s >= 80) return { label:"LEGENDARY", color:"#fbbf24", stars:5 };
+  if (s >= 60) return { label:"EPIC", color:"#a78bfa", stars:4 };
+  if (s >= 40) return { label:"SKILLED", color:"#4ade80", stars:3 };
+  if (s >= 20) return { label:"NOVICE", color:"#60a5fa", stars:2 };
+  return { label:"ROOKIE", color:"#8884a0", stars:1 };
 }
 
-// ── Generate Badge SVG ──
-async function generateBadge(data) {
-  // Parse data - support both ProjectScoreReport and BenchmarkResult formats
-  let model, skill, score, found, total, fp, project, cats;
+// ── Badge SVG ──
+function badgeSVG(model, skill, score, found, project, fp, code) {
+  const t = tier(score);
+  const stars = "\u2605".repeat(t.stars) + "\u2606".repeat(5-t.stars);
+  const w=460, h=200;
+  const barW = Math.max(2, score/100*300);
+  const isVerified = !!VERIFIED[code];
 
-  if (data.meta) {
-    // BenchmarkResult format
-    model = data.meta.model_display || data.meta.model || "Unknown";
-    skill = data.meta.prompt_preset || "custom";
-    score = (data.aggregate?.composite_score ?? 0) * 100;
-    found = data.aggregate?.total_found ?? 0;
-    total = data.aggregate?.total_issues ?? 100;
-    fp = data.aggregate?.total_false_positives ?? 0;
-    project = data.projects?.length > 1 ? "overall" : (data.projects?.[0]?.project ?? "unknown");
-    cats = {};
-  } else if (data.composite_score !== undefined) {
-    // ProjectScoreReport format
-    model = data.reviewer || "Unknown";
-    skill = "scored";
-    score = data.composite_score * 100;
-    found = data.matched_issues ?? 0;
-    total = data.total_issues ?? 100;
-    fp = data.false_positives ?? 0;
-    project = data.project || "unknown";
-    cats = {};
-    if (data.by_category) {
-      Object.entries(data.by_category).forEach(([k,v]) => { cats[k] = v.normalized_score ?? v.recall ?? 0; });
-    }
-  } else if (data.reviewer && data.findings) {
-    // Raw review output - can't generate badge from unscored data
-    document.getElementById('error').textContent = "This is a raw review file (not scored). Run the scorer first, then use the report JSON.";
-    document.getElementById('error').style.display = 'block';
-    return;
-  } else {
-    document.getElementById('error').textContent = "Unrecognized format. Use a result.json from _results/ or a scored report JSON.";
-    document.getElementById('error').style.display = 'block';
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <!-- Frame -->
+  <rect width="${w}" height="${h}" rx="2" fill="#0e0e18"/>
+  <rect x="2" y="2" width="${w-4}" height="${h-4}" fill="${t.color}" opacity="0.12" rx="1"/>
+  <rect x="4" y="4" width="${w-8}" height="${h-8}" fill="#141420" rx="1"/>
+  <rect x="4" y="4" width="4" height="4" fill="${t.color}" opacity="0.5"/>
+  <rect x="${w-8}" y="4" width="4" height="4" fill="${t.color}" opacity="0.5"/>
+  <rect x="4" y="${h-8}" width="4" height="4" fill="${t.color}" opacity="0.5"/>
+  <rect x="${w-8}" y="${h-8}" width="4" height="4" fill="${t.color}" opacity="0.5"/>
+
+  <!-- Header bar -->
+  <rect x="4" y="4" width="${w-8}" height="26" fill="#1a1a2a"/>
+  <line x1="4" y1="30" x2="${w-4}" y2="30" stroke="${t.color}" stroke-width="1" opacity="0.25"/>
+
+  <!-- Pixel fire -->
+  <rect fill="#f97316" x="12" y="10" width="3" height="3"/>
+  <rect fill="#fb923c" x="15" y="11" width="2" height="2"/>
+  <rect fill="#fbbf24" x="13" y="11" width="2" height="2"/>
+  <rect fill="#3f3f46" x="10" y="15" width="9" height="7"/>
+  <rect fill="#52525b" x="12" y="17" width="1" height="3"/>
+  <rect fill="#52525b" x="15" y="17" width="1" height="3"/>
+
+  <!-- TRASHFIRE -->
+  <text x="26" y="22" font-family="'Press Start 2P',monospace" font-size="7" fill="#f97316">TRASH</text>
+  <text x="66" y="22" font-family="'Press Start 2P',monospace" font-size="7" fill="#e8e4d9">FIRE</text>
+
+  <!-- Tier -->
+  <text x="${w-14}" y="22" font-family="'Press Start 2P',monospace" font-size="6" fill="#e8e4d9" text-anchor="end" opacity="0.4">${t.label}</text>
+
+  <!-- Stars -->
+  <text x="20" y="48" font-family="sans-serif" font-size="14" fill="${t.color}" letter-spacing="2">${stars}</text>
+
+  <!-- Model -->
+  <text x="20" y="72" font-family="'Press Start 2P',monospace" font-size="9" fill="#e8e4d9">${model}</text>
+
+  <!-- Skill + project -->
+  <text x="20" y="90" font-family="monospace" font-size="9" fill="#6b6b80">${skill} // ${project}</text>
+
+  <!-- Score -->
+  <text x="20" y="132" font-family="'Press Start 2P',monospace" font-size="28" fill="#e8e4d9" letter-spacing="2">${score.toFixed(1)}<tspan font-size="14" dy="-3">%</tspan></text>
+
+  <!-- Bar -->
+  <rect x="20" y="142" width="300" height="6" rx="2" fill="#1a1a2e"/>
+  <rect x="20" y="142" width="${barW}" height="6" rx="2" fill="${t.color}"/>
+
+  <!-- Found + FP -->
+  <text x="340" y="122" font-family="'Press Start 2P',monospace" font-size="11" fill="#e8e4d9">${found}</text>
+  <text x="340" y="136" font-family="monospace" font-size="8" fill="#6b6b80">found</text>
+  <text x="410" y="136" font-family="monospace" font-size="8" fill="${parseInt(fp)>20?'#ef4444':'#6b6b80'}">${fp} FP</text>
+
+  <!-- Verify code -->
+  <rect x="310" y="${h-28}" width="138" height="18" rx="3" fill="#1a1a2a" stroke="#2a2a3d" stroke-width="1"/>
+  <text x="322" y="${h-16}" font-family="monospace" font-size="7.5" fill="${isVerified?'#4ade80':'#6b6b80'}">${isVerified?'\u2713':'\u25cb'} ${code}</text>
+
+  <!-- trashfire.io -->
+  <text x="20" y="${h-16}" font-family="'Press Start 2P',monospace" font-size="5" fill="#3a3a50">trashfire.io</text>
+</svg>`;
+}
+
+// ── Render ──
+let _svg = '';
+async function render() {
+  const model = document.getElementById('f-model').value || 'Model';
+  const skill = document.getElementById('f-skill').value || 'vanilla';
+  const score = parseFloat(document.getElementById('f-score').value) || 0;
+  const found = document.getElementById('f-found').value || '0/100';
+  const project = document.getElementById('f-project').value;
+  const fp = document.getElementById('f-fp').value || '0';
+  const code = await makeCode(model, skill, score.toFixed(1), found, project, fp);
+  _svg = badgeSVG(model, skill, score, found, project, fp, code);
+  document.getElementById('badge-area').innerHTML = _svg;
+}
+
+function dlSVG() {
+  const a = document.createElement('a');
+  a.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(_svg);
+  a.download = 'trashfire-badge.svg'; a.click();
+}
+function dlPNG() {
+  const c = document.createElement('canvas');
+  c.width=920; c.height=400;
+  const ctx=c.getContext('2d'), img=new Image();
+  img.onload = () => { ctx.drawImage(img,0,0,920,400); const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='trashfire-badge.png'; a.click(); };
+  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(_svg)));
+}
+
+// ── Verify ──
+async function verifyCode() {
+  const code = document.getElementById('v-code').value.trim();
+  const el = document.getElementById('v-result');
+  el.className = 'verify-result';
+
+  if (!code || !code.startsWith('TF-')) {
+    el.className = 'verify-result fail';
+    el.innerHTML = 'Invalid code format. Codes start with <b>TF-</b> followed by 12 hex characters.';
     return;
   }
 
-  const t = tier(score);
-  const verifyStr = `${model}|${skill}|${score.toFixed(1)}|${found}/${total}|${project}`;
-  const hash = await hashData(JSON.stringify(data));
-
-  const w = 480, h = 260;
-  const stars = "★".repeat(t.stars) + "☆".repeat(5 - t.stars);
-
-  // Category bars (if available)
-  const catKeys = ["SEC","LOGIC","PERF","BP","SMELL","TRICKY"];
-  const catLabels = {SEC:"SEC",LOGIC:"LOG",PERF:"PRF",BP:"BP",SMELL:"SML",TRICKY:"TRK"};
-  const catColors = {SEC:"#ef4444",LOGIC:"#60a5fa",PERF:"#fbbf24",BP:"#a78bfa",SMELL:"#6b7280",TRICKY:"#f97316"};
-  const hasCats = catKeys.some(k => (cats[k] ?? 0) > 0);
-
-  const catBars = hasCats ? catKeys.map((k, i) => {
-    const v = cats[k] ?? 0;
-    const x = 24 + i * 72;
-    return `
-      <text x="${x+22}" y="208" font-family="'Press Start 2P',monospace" font-size="5" fill="#6b6b80" text-anchor="middle">${catLabels[k]}</text>
-      <rect x="${x}" y="214" width="44" height="5" rx="1" fill="#1a1a2e"/>
-      <rect x="${x}" y="214" width="${Math.max(1, v * 44)}" height="5" rx="1" fill="${catColors[k]}"/>
-      <text x="${x+22}" y="228" font-family="'Press Start 2P',monospace" font-size="5" fill="${v > 0 ? catColors[k] : '#333'}" text-anchor="middle">${Math.round(v*100)}</text>
-    `;
-  }).join('') : '';
-
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
-  <defs>
-    <filter id="crt"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="0.5" xChannelSelector="R" yChannelSelector="G"/></filter>
-    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="rgba(255,255,255,0.03)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></linearGradient>
-  </defs>
-
-  <!-- Outer pixel border -->
-  <rect x="0" y="0" width="${w}" height="${h}" rx="2" fill="#0e0e18"/>
-  <rect x="2" y="2" width="${w-4}" height="${h-4}" rx="1" fill="${t.color}" opacity="0.15"/>
-  <rect x="4" y="4" width="${w-8}" height="${h-8}" rx="1" fill="#12121e"/>
-  <rect x="6" y="6" width="${w-12}" height="${h-12}" fill="#151522"/>
-  <rect x="6" y="6" width="${w-12}" height="${h-12}" fill="url(#shine)"/>
-
-  <!-- Corner pixels -->
-  <rect x="4" y="4" width="4" height="4" fill="${t.color}" opacity="0.4"/>
-  <rect x="${w-8}" y="4" width="4" height="4" fill="${t.color}" opacity="0.4"/>
-  <rect x="4" y="${h-8}" width="4" height="4" fill="${t.color}" opacity="0.4"/>
-  <rect x="${w-8}" y="${h-8}" width="4" height="4" fill="${t.color}" opacity="0.4"/>
-
-  <!-- Header bar -->
-  <rect x="6" y="6" width="${w-12}" height="28" fill="#1a1a2e"/>
-  <line x1="6" y1="34" x2="${w-6}" y2="34" stroke="${t.color}" stroke-width="1" opacity="0.3"/>
-
-  <!-- Pixel fire icon -->
-  <rect fill="#f97316" x="14" y="12" width="4" height="4"/>
-  <rect fill="#fb923c" x="18" y="14" width="3" height="3"/>
-  <rect fill="#fbbf24" x="16" y="14" width="2" height="2"/>
-  <rect fill="#3f3f46" x="12" y="18" width="10" height="8"/>
-  <rect fill="#52525b" x="14" y="20" width="2" height="4"/>
-  <rect fill="#52525b" x="18" y="20" width="2" height="4"/>
-
-  <!-- TRASHFIRE header -->
-  <text x="30" y="24" font-family="'Press Start 2P',monospace" font-size="8" fill="#f97316">TRASH</text>
-  <text x="75" y="24" font-family="'Press Start 2P',monospace" font-size="8" fill="${t.color}">FIRE</text>
-
-  <!-- Tier label -->
-  <text x="${w-20}" y="24" font-family="'Press Start 2P',monospace" font-size="7" fill="${t.color}" text-anchor="end" opacity="0.5">${t.label}</text>
-
-  <!-- Stars -->
-  <text x="24" y="54" font-family="sans-serif" font-size="16" fill="${t.color}" letter-spacing="3">${stars}</text>
-
-  <!-- Model name -->
-  <text x="24" y="80" font-family="'Press Start 2P',monospace" font-size="10" fill="${t.color}">${model}</text>
-
-  <!-- Skill + project -->
-  <text x="24" y="98" font-family="monospace" font-size="10" fill="#6b6b80">${skill} // ${project}</text>
-
-  <!-- Score -->
-  <text x="24" y="142" font-family="'Press Start 2P',monospace" font-size="32" fill="${t.color}" letter-spacing="2">${score.toFixed(1)}<tspan font-size="18" dy="-4">%</tspan></text>
-
-  <!-- Score bar -->
-  <rect x="24" y="154" width="320" height="8" rx="2" fill="#1a1a2e"/>
-  <rect x="24" y="154" width="${Math.max(2, score/100*320)}" height="8" rx="2" fill="${t.color}"/>
-
-  <!-- Found / FP -->
-  <text x="360" y="132" font-family="'Press Start 2P',monospace" font-size="12" fill="${t.color}">${found}<tspan font-size="7" fill="#6b6b80">/${total}</tspan></text>
-  <text x="360" y="146" font-family="monospace" font-size="8" fill="#6b6b80">found</text>
-  <text x="420" y="146" font-family="monospace" font-size="8" fill="${fp > 20 ? '#ef4444' : '#6b6b80'}">${fp} FP</text>
-
-  <!-- Category mini-bars -->
-  ${catBars}
-
-  <!-- Verification hash -->
-  <text x="${w-20}" y="${h-14}" font-family="monospace" font-size="7" fill="#333" text-anchor="end">verify: ${hash}</text>
-
-  <!-- trashfire.io -->
-  <text x="24" y="${h-14}" font-family="'Press Start 2P',monospace" font-size="6" fill="#4a4a5e">trashfire.io</text>
-</svg>`;
-
-  document.getElementById('badge-container').innerHTML = svg;
-  document.getElementById('preview').classList.add('show');
-  document.getElementById('verify-line').innerHTML = `Verification hash: <code>${hash}</code> (derived from result data)`;
-
-  // Store SVG for downloads
-  window._currentSVG = svg;
+  if (VERIFIED[code]) {
+    const v = VERIFIED[code];
+    el.className = 'verify-result ok';
+    el.innerHTML = `<b>VERIFIED</b><br>${v.model} + ${v.skill} on ${v.project}<br>Score: ${v.score}% | Run: ${v.run_id} | Date: ${v.date}`;
+  } else {
+    el.className = 'verify-result pending';
+    el.innerHTML = `<b>NOT FOUND</b><br>This code does not match any submitted run in the public leaderboard.<br>The badge may be real (just not submitted yet) or fabricated.`;
+  }
 }
 
-function downloadSVG() {
-  if (!window._currentSVG) return;
-  const a = document.createElement('a');
-  a.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(window._currentSVG);
-  a.download = 'trashfire-badge.svg';
-  a.click();
-}
-
-function downloadPNG() {
-  if (!window._currentSVG) return;
-  const canvas = document.createElement('canvas');
-  canvas.width = 960; canvas.height = 520;
-  const ctx = canvas.getContext('2d');
-  const img = new Image();
-  img.onload = () => {
-    ctx.drawImage(img, 0, 0, 960, 520);
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = 'trashfire-badge.png';
-    a.click();
-  };
-  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(window._currentSVG)));
-}
+render();
 </script>
 </body>
 </html>
