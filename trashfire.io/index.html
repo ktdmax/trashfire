@@ -71,64 +71,89 @@
     /* ── (steps removed, replaced by terminal) ── */
 
     /* ── Leaderboard ── */
-    #leaderboard { background: var(--surface); border-radius: 20px; border: 1px solid var(--border); padding: 2.5rem; margin-top: 1rem; }
+    .lb-section { max-width: 1200px; }
+    #leaderboard { margin-top: 1rem; }
     .lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
     .lb-header h2 { margin-bottom: 0; }
-    .lb-updated { color: var(--muted); font-size: 0.85rem; }
-    .lb-controls { display: flex; gap: 0.5rem; align-items: center; }
-    .lb-controls .hint { font-size: 0.78rem; color: var(--muted); }
-    .btn-compare {
-      padding: 0.4rem 1rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
-      background: var(--accent); color: #fff; border: none; cursor: pointer; display: none;
-    }
-    .btn-compare:hover { background: var(--accent2); }
-    .btn-compare.active { display: inline-block; }
-    table { width: 100%; border-collapse: collapse; }
-    thead th {
-      text-align: left; padding: 0.75rem 1rem; font-size: 0.72rem; font-weight: 600;
-      color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
-      border-bottom: 1px solid var(--border);
-    }
-    thead .right { text-align: right; }
-    tbody td { padding: 0.85rem 1rem; border-bottom: 1px solid rgba(63,63,70,0.5); vertical-align: middle; }
-    tbody .right { text-align: right; font-variant-numeric: tabular-nums; }
-    tbody tr { cursor: pointer; transition: background 0.15s; }
-    tbody tr:hover { background: rgba(249,115,22,0.06); }
-    tbody tr.selected { background: rgba(249,115,22,0.1); border-left: 3px solid var(--accent); }
-    tbody tr.compare-b { background: rgba(34,197,94,0.08); border-left: 3px solid var(--green); }
-    .rank { font-size: 1.2rem; width: 50px; text-align: center; }
-    .model-name { font-weight: 600; }
-    .model-provider { font-size: 0.78rem; color: var(--muted); }
-    .score { font-weight: 700; color: var(--green); font-size: 1.05rem; }
-    .preset-tag {
-      display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem;
-      background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
-    }
-    .found-bar { display: flex; align-items: center; gap: 6px; }
-    .found-bar-bg { width: 50px; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
-    .found-bar-fill { height: 100%; background: var(--green); border-radius: 3px; }
+    .lb-meta { color: var(--muted); font-size: 0.85rem; }
+    .lb-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .filter-btn { padding: 0.35rem 0.85rem; border-radius: 8px; font-size: 0.78rem; font-weight: 500; background: var(--surface); color: var(--muted); border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
+    .filter-btn:hover { border-color: var(--muted); }
+    .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
     .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
-    .empty-state p { margin-bottom: 1rem; }
 
-    /* ── Radar / Detail Panel ── */
-    .detail-panel {
-      margin-top: 1.5rem; padding: 2rem; background: var(--bg); border: 1px solid var(--border);
-      border-radius: 16px; display: none;
+    /* ── Ranking Row (benchmark card style) ── */
+    .rank-row {
+      display: grid; grid-template-columns: 50px 1fr; gap: 0;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      margin-bottom: 0.75rem; overflow: hidden; transition: all 0.2s; cursor: pointer;
     }
-    .detail-panel.open { display: block; animation: fadeIn 0.3s; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
-    .radar-wrap { display: flex; justify-content: center; align-items: center; }
-    .detail-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .detail-stat {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem;
+    .rank-row:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .rank-row.sel-a { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .rank-row.sel-b { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    .rank-num { display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; color: var(--muted); background: rgba(255,255,255,0.02); border-right: 1px solid var(--border); }
+    .rank-row:nth-child(1) .rank-num { color: var(--accent); }
+    .rank-row:nth-child(2) .rank-num { color: var(--accent2); }
+    .rank-row:nth-child(3) .rank-num { color: var(--yellow); }
+    .rank-content { padding: 1rem 1.25rem; }
+    .rank-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .rank-model { font-size: 1.1rem; font-weight: 700; }
+    .rank-tags { display: flex; gap: 0.4rem; align-items: center; }
+    .tag { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px; font-size: 0.72rem; font-weight: 600; }
+    .tag-preset { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+    .tag-skill { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+    .tag-provider { background: rgba(249,115,22,0.1); color: var(--accent); border: 1px solid rgba(249,115,22,0.2); }
+
+    /* Score bar */
+    .rank-score-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.6rem; }
+    .score-big { font-size: 1.5rem; font-weight: 800; color: var(--green); min-width: 70px; }
+    .score-bar-wrap { flex: 1; height: 22px; background: var(--surface2); border-radius: 6px; overflow: hidden; position: relative; }
+    .score-bar-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
+    .score-bar-fill.green { background: linear-gradient(90deg, #166534, var(--green)); }
+
+    /* Category mini-bars */
+    .rank-cats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; }
+    .cat-mini { text-align: center; }
+    .cat-mini-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+    .cat-mini-bar { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+    .cat-mini-fill { height: 100%; border-radius: 2px; }
+    .cat-mini-val { font-size: 0.78rem; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+    /* Stats row */
+    .rank-stats { display: flex; gap: 1.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
+    .rank-stat { font-size: 0.78rem; color: var(--muted); }
+    .rank-stat b { color: var(--text); font-weight: 600; }
+
+    /* ── Compare Panel ── */
+    .compare-panel {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 2rem; margin-top: 1.5rem; display: none; animation: fadeIn 0.3s;
     }
-    .detail-stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-    .detail-stat-value { font-size: 1.25rem; font-weight: 700; margin-top: 0.15rem; }
-    .detail-legend { display: flex; gap: 1.5rem; margin-top: 1rem; justify-content: center; flex-wrap: wrap; }
-    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--muted); }
-    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
-    @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
+    .compare-panel.open { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; } }
+    .compare-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .compare-title { font-size: 1rem; font-weight: 700; }
+    .compare-close { background: none; border: 1px solid var(--border); color: var(--muted); padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+    .compare-close:hover { border-color: var(--muted); }
+    .compare-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; }
+    .compare-side { text-align: center; }
+    .compare-side .name { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .compare-side .sub { font-size: 0.78rem; color: var(--muted); }
+    .compare-vs { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: var(--border); padding: 0 1.5rem; }
+    .compare-rows { margin-top: 1.5rem; }
+    .compare-metric { display: grid; grid-template-columns: 1fr 120px 1fr; gap: 0; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(63,63,70,0.3); }
+    .compare-metric:last-child { border-bottom: none; }
+    .cm-val { font-size: 1.1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .cm-val.left { text-align: right; padding-right: 1rem; }
+    .cm-val.right { text-align: left; padding-left: 1rem; }
+    .cm-val.winner { color: var(--green); }
+    .cm-label { text-align: center; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .cm-diffbar { height: 6px; background: var(--surface2); border-radius: 3px; margin-top: 4px; position: relative; overflow: visible; display: flex; }
+    .cm-diffbar-a { height: 100%; background: var(--accent); border-radius: 3px 0 0 3px; }
+    .cm-diffbar-b { height: 100%; background: var(--green); border-radius: 0 3px 3px 0; }
+    .compare-hint { text-align: center; margin-top: 1rem; font-size: 0.78rem; color: var(--muted); }
+
+    @media (max-width: 768px) { .rank-cats { grid-template-columns: repeat(3, 1fr); } .compare-grid { grid-template-columns: 1fr; } .compare-vs { padding: 0.5rem 0; } }
 
     /* ── Categories ── */
     .cats { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
@@ -305,27 +330,23 @@
   </section>
 
   <!-- Leaderboard -->
-  <section>
+  <section class="lb-section">
     <div id="leaderboard">
       <div class="lb-header">
         <div>
           <h2>Leaderboard</h2>
-          <span class="lb-updated" id="lb-date"></span>
+          <span class="lb-meta" id="lb-date"></span>
         </div>
-        <div class="lb-controls">
-          <span class="hint" id="lb-hint">Click a row to see the radar chart. Click a second to compare.</span>
-          <button class="btn-compare" id="btn-clear" onclick="clearSelection()">Clear</button>
-        </div>
+        <span class="lb-meta">Select two entries to compare</span>
       </div>
-      <div id="lb-table"></div>
-      <div class="detail-panel" id="detail-panel">
-        <div class="detail-grid">
-          <div class="radar-wrap"><canvas id="radar" width="360" height="360"></canvas></div>
-          <div>
-            <div class="detail-stats" id="detail-stats"></div>
-            <div class="detail-legend" id="detail-legend"></div>
-          </div>
+      <div class="lb-filters" id="lb-filters"></div>
+      <div id="lb-rows"></div>
+      <div class="compare-panel" id="compare-panel">
+        <div class="compare-header">
+          <div class="compare-title">Head-to-Head Comparison</div>
+          <button class="compare-close" onclick="clearCompare()">Clear</button>
         </div>
+        <div id="compare-content"></div>
       </div>
     </div>
   </section>
@@ -350,37 +371,21 @@
   </footer>
 
   <script>
-    // ── Data (enriched with category scores from actual benchmark reports) ──
-    const RESULTS = [
-      {
-        run_id: "dev-savvy-claude-opus", timestamp: "2026-03-28T06:11:01Z",
-        model: "claude-opus-4-6", model_display: "Claude Opus 4.6", provider: "anthropic",
-        preset: "dev-savvy", skills: [], skill_source: "none",
-        composite_score: 0.452, found: 62, total: 100, false_positives: 27,
-        recall: 0.62, precision: 0.70,
-        cats: { SEC: 0.528, LOGIC: 0, PERF: 0.938, BP: 0, SMELL: 0.775, TRICKY: 0.768 }
-      },
-      {
-        run_id: "vanilla-claude-opus", timestamp: "2026-03-28T06:10:59Z",
-        model: "claude-opus-4-6", model_display: "Claude Opus 4.6", provider: "anthropic",
-        preset: "vanilla", skills: [], skill_source: "none",
-        composite_score: 0.411, found: 57, total: 100, false_positives: 18,
-        recall: 0.57, precision: 0.76,
-        cats: { SEC: 0.496, LOGIC: 0, PERF: 0.938, BP: 0, SMELL: 0.775, TRICKY: 0.571 }
-      },
-      {
-        run_id: "expert-claude-opus", timestamp: "2026-03-28T06:10:49Z",
-        model: "claude-opus-4-6", model_display: "Claude Opus 4.6", provider: "anthropic",
-        preset: "expert", skills: [], skill_source: "none",
-        composite_score: 0.377, found: 57, total: 100, false_positives: 17,
-        recall: 0.57, precision: 0.77,
-        cats: { SEC: 0.506, LOGIC: 0, PERF: 0.813, BP: 0, SMELL: 0.775, TRICKY: 0.465 }
-      }
+    const R = [
+      { id:"dev-savvy-opus", d:"Claude Opus 4.6", p:"anthropic", pr:"dev-savvy", sk:[], ss:"none",
+        sc:0.452, f:62, t:100, fp:27, re:0.62, prec:0.70,
+        c:{SEC:0.528,LOGIC:0,PERF:0.938,BP:0,SMELL:0.775,TRICKY:0.768} },
+      { id:"vanilla-opus", d:"Claude Opus 4.6", p:"anthropic", pr:"vanilla", sk:[], ss:"none",
+        sc:0.411, f:57, t:100, fp:18, re:0.57, prec:0.76,
+        c:{SEC:0.496,LOGIC:0,PERF:0.938,BP:0,SMELL:0.775,TRICKY:0.571} },
+      { id:"expert-opus", d:"Claude Opus 4.6", p:"anthropic", pr:"expert", sk:[], ss:"none",
+        sc:0.377, f:57, t:100, fp:17, re:0.57, prec:0.77,
+        c:{SEC:0.506,LOGIC:0,PERF:0.813,BP:0,SMELL:0.775,TRICKY:0.465} }
     ];
-
     const CATS = ["SEC","LOGIC","PERF","BP","SMELL","TRICKY"];
-    const CAT_LABELS = { SEC:"Security", LOGIC:"Logic", PERF:"Performance", BP:"Best Practice", SMELL:"Code Smell", TRICKY:"Tricky" };
-    const PROJECTS = [
+    const CL = {SEC:"Security",LOGIC:"Logic",PERF:"Perf",BP:"Best Pr.",SMELL:"Smell",TRICKY:"Tricky"};
+    const CC = {SEC:"#ef4444",LOGIC:"#3b82f6",PERF:"#eab308",BP:"#8b5cf6",SMELL:"#6b7280",TRICKY:"#f97316"};
+    const PJ = [
       {n:"grog-shop",s:"Next.js"},{n:"tentacle-labs",s:"Flask"},{n:"scumm-bar",s:"Express"},
       {n:"manny-travel",s:"React+PG"},{n:"sam-max-cases",s:"Django"},{n:"full-throttle",s:"Go+K8s"},
       {n:"loom-weaver",s:"Vanilla JS"},{n:"zak-mckracken",s:"PHP+Py+JS"},{n:"monkey-wrench",s:"Rails"},
@@ -401,206 +406,149 @@
       {n:"otis-escape-room",s:"Litestar"},{n:"cobb-dataforge",s:"dbt"},
     ];
 
-    // ── State ──
-    let selectedA = null, selectedB = null;
+    let selA = null, selB = null, filter = "all";
+    const pct = n => (n*100).toFixed(1)+"%";
+    const pctN = n => Math.round(n*100);
 
-    function pct(n) { return (n * 100).toFixed(1) + "%"; }
-    function medal(i) { return ["\u{1F947}","\u{1F948}","\u{1F949}"][i] || `#${i+1}`; }
-
-    // ── Radar Chart (Canvas) ──
-    function drawRadar(canvasId, dataA, dataB, labelA, labelB) {
-      const canvas = document.getElementById(canvasId);
-      const ctx = canvas.getContext("2d");
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = 360 * dpr; canvas.height = 360 * dpr;
-      canvas.style.width = "360px"; canvas.style.height = "360px";
-      ctx.scale(dpr, dpr);
-
-      const cx = 180, cy = 180, maxR = 140;
-      const n = CATS.length;
-      const angleStep = (2 * Math.PI) / n;
-      const startAngle = -Math.PI / 2;
-
-      ctx.clearRect(0, 0, 360, 360);
-
-      // Grid rings
-      [0.2, 0.4, 0.6, 0.8, 1.0].forEach(pctVal => {
-        ctx.beginPath();
-        for (let i = 0; i <= n; i++) {
-          const a = startAngle + i * angleStep;
-          const r = maxR * pctVal;
-          const x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = "rgba(63,63,70,0.5)"; ctx.lineWidth = 1; ctx.stroke();
-        // Percentage label
-        if (pctVal < 1) {
-          ctx.fillStyle = "#555"; ctx.font = "10px sans-serif";
-          ctx.fillText(Math.round(pctVal*100)+"%", cx + 3, cy - maxR * pctVal + 12);
-        }
-      });
-
-      // Axis lines + labels
-      for (let i = 0; i < n; i++) {
-        const a = startAngle + i * angleStep;
-        const ex = cx + maxR * Math.cos(a), ey = cy + maxR * Math.sin(a);
-        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey);
-        ctx.strokeStyle = "rgba(63,63,70,0.3)"; ctx.stroke();
-        // Label
-        const lx = cx + (maxR + 18) * Math.cos(a), ly = cy + (maxR + 18) * Math.sin(a);
-        ctx.fillStyle = "#a1a1aa"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.fillText(CAT_LABELS[CATS[i]], lx, ly);
-      }
-
-      // Draw data polygon
-      function drawPoly(data, fillColor, strokeColor) {
-        ctx.beginPath();
-        for (let i = 0; i <= n; i++) {
-          const idx = i % n;
-          const a = startAngle + idx * angleStep;
-          const val = data[CATS[idx]] || 0;
-          const r = maxR * val;
-          const x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = fillColor; ctx.fill();
-        ctx.strokeStyle = strokeColor; ctx.lineWidth = 2.5; ctx.stroke();
-        // Dots
-        for (let i = 0; i < n; i++) {
-          const a = startAngle + i * angleStep;
-          const val = data[CATS[i]] || 0;
-          const r = maxR * val;
-          ctx.beginPath();
-          ctx.arc(cx + r * Math.cos(a), cy + r * Math.sin(a), 4, 0, Math.PI * 2);
-          ctx.fillStyle = strokeColor; ctx.fill();
-        }
-      }
-
-      // Draw B first (behind), then A
-      if (dataB) drawPoly(dataB, "rgba(34,197,94,0.1)", "rgba(34,197,94,0.7)");
-      drawPoly(dataA, "rgba(249,115,22,0.15)", "rgba(249,115,22,0.9)");
-
-      // Legend
-      const legend = document.getElementById("detail-legend");
-      if (dataB) {
-        legend.innerHTML = `
-          <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>${labelA}</div>
-          <div class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>${labelB}</div>`;
-      } else {
-        legend.innerHTML = `<div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>${labelA}</div>`;
-      }
+    // Filters
+    function setFilter(f) {
+      filter = f;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.f === f));
+      renderRows();
     }
 
-    // ── Detail Stats ──
-    function renderStats(r, compareR) {
-      const stats = document.getElementById("detail-stats");
-      const pairs = [
-        ["Score", pct(r.composite_score), compareR ? pct(compareR.composite_score) : null],
-        ["Found", `${r.found}/${r.total}`, compareR ? `${compareR.found}/${compareR.total}` : null],
-        ["Recall", pct(r.recall), compareR ? pct(compareR.recall) : null],
-        ["Precision", pct(r.precision), compareR ? pct(compareR.precision) : null],
-        ["False Pos", r.false_positives, compareR ? compareR.false_positives : null],
-        ["Projects", r.projects_tested || 1, compareR ? (compareR.projects_tested || 1) : null],
-      ];
-      stats.innerHTML = pairs.map(([label, val, cmpVal]) => `
-        <div class="detail-stat">
-          <div class="detail-stat-label">${label}</div>
-          <div class="detail-stat-value">${val}${cmpVal !== null ? ` <span style="color:var(--green);font-size:0.85rem">vs ${cmpVal}</span>` : ''}</div>
-        </div>`).join("");
+    function renderFilters() {
+      const models = [...new Set(R.map(r=>r.d))];
+      const presets = [...new Set(R.map(r=>r.pr))];
+      let h = `<button class="filter-btn active" data-f="all" onclick="setFilter('all')">All</button>`;
+      models.forEach(m => { h += `<button class="filter-btn" data-f="m:${m}" onclick="setFilter('m:${m}')">${m}</button>`; });
+      presets.forEach(p => { h += `<button class="filter-btn" data-f="p:${p}" onclick="setFilter('p:${p}')">${p}</button>`; });
+      document.getElementById("lb-filters").innerHTML = h;
     }
 
-    // ── Row Selection ──
-    function selectRow(idx) {
-      if (selectedA === idx) {
-        // Deselect
-        selectedA = null; selectedB = null;
-        document.getElementById("detail-panel").classList.remove("open");
-        document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("selected","compare-b"));
-        document.getElementById("btn-clear").classList.remove("active");
-        document.getElementById("lb-hint").textContent = "Click a row to see the radar chart. Click a second to compare.";
+    function getFiltered() {
+      if (filter === "all") return R;
+      if (filter.startsWith("m:")) return R.filter(r => r.d === filter.slice(2));
+      if (filter.startsWith("p:")) return R.filter(r => r.pr === filter.slice(2));
+      return R;
+    }
+
+    // Rank rows
+    function toggleSelect(idx) {
+      const realIdx = getFiltered()[idx]?.id;
+      if (!realIdx) return;
+      if (selA === realIdx) { selA = null; selB = null; }
+      else if (selA === null) { selA = realIdx; }
+      else if (selB === null && realIdx !== selA) { selB = realIdx; }
+      else { selA = realIdx; selB = null; }
+      renderRows();
+      renderCompare();
+    }
+
+    function clearCompare() { selA = null; selB = null; renderRows(); renderCompare(); }
+
+    function renderRows() {
+      const data = getFiltered();
+      document.getElementById("run-count").textContent = R.length;
+      if (data.length === 0) {
+        document.getElementById("lb-rows").innerHTML = `<div class="empty-state"><p>No results match this filter.</p></div>`;
         return;
       }
-      if (selectedA === null) {
-        selectedA = idx; selectedB = null;
-        document.getElementById("lb-hint").textContent = "Click another row to compare.";
-      } else if (selectedB === null && idx !== selectedA) {
-        selectedB = idx;
-        document.getElementById("lb-hint").textContent = "";
-      } else {
-        selectedA = idx; selectedB = null;
-        document.getElementById("lb-hint").textContent = "Click another row to compare.";
-      }
+      document.getElementById("lb-date").textContent = data.length + " runs";
 
-      // Highlight rows
-      document.querySelectorAll("tbody tr").forEach((tr, i) => {
-        tr.classList.toggle("selected", i === selectedA);
-        tr.classList.toggle("compare-b", i === selectedB);
-      });
-      document.getElementById("btn-clear").classList.toggle("active", selectedA !== null);
+      document.getElementById("lb-rows").innerHTML = data.map((r, i) => {
+        const selClass = r.id === selA ? "sel-a" : r.id === selB ? "sel-b" : "";
+        const skills = r.sk.length > 0 ? (r.ss === "supaskills" ? "SupaSkills" : r.sk.join(", ")) : "";
+        return `
+        <div class="rank-row ${selClass}" onclick="toggleSelect(${i})">
+          <div class="rank-num">${i+1}</div>
+          <div class="rank-content">
+            <div class="rank-top">
+              <div>
+                <span class="rank-model">${r.d}</span>
+                <div class="rank-tags">
+                  <span class="tag tag-provider">${r.p}</span>
+                  <span class="tag tag-preset">${r.pr}</span>
+                  ${skills ? `<span class="tag tag-skill">${skills}</span>` : ""}
+                </div>
+              </div>
+            </div>
+            <div class="rank-score-row">
+              <div class="score-big">${pct(r.sc)}</div>
+              <div class="score-bar-wrap">
+                <div class="score-bar-fill green" style="width:${r.sc*100}%"></div>
+              </div>
+            </div>
+            <div class="rank-cats">
+              ${CATS.map(cat => `
+                <div class="cat-mini">
+                  <div class="cat-mini-label">${CL[cat]}</div>
+                  <div class="cat-mini-bar"><div class="cat-mini-fill" style="width:${(r.c[cat]||0)*100}%;background:${CC[cat]}"></div></div>
+                  <div class="cat-mini-val" style="color:${(r.c[cat]||0)>0?CC[cat]:'#555'}">${pctN(r.c[cat]||0)}%</div>
+                </div>`).join("")}
+            </div>
+            <div class="rank-stats">
+              <div class="rank-stat">Found <b>${r.f}/${r.t}</b></div>
+              <div class="rank-stat">Recall <b>${pct(r.re)}</b></div>
+              <div class="rank-stat">Precision <b>${pct(r.prec)}</b></div>
+              <div class="rank-stat">FP <b style="color:${r.fp>20?'var(--red)':'inherit'}">${r.fp}</b></div>
+            </div>
+          </div>
+        </div>`;
+      }).join("");
+    }
 
-      // Show panel
-      const panel = document.getElementById("detail-panel");
+    // Compare panel
+    function renderCompare() {
+      const panel = document.getElementById("compare-panel");
+      if (!selA || !selB) { panel.classList.remove("open"); return; }
       panel.classList.add("open");
+      const a = R.find(r=>r.id===selA), b = R.find(r=>r.id===selB);
+      if (!a || !b) return;
 
-      const a = RESULTS[selectedA];
-      const b = selectedB !== null ? RESULTS[selectedB] : null;
-      const labelA = `${a.model_display} (${a.preset})`;
-      const labelB = b ? `${b.model_display} (${b.preset})` : null;
+      const metrics = [
+        { l:"Composite Score", a:a.sc, b:b.sc, fmt:pct },
+        { l:"Recall", a:a.re, b:b.re, fmt:pct },
+        { l:"Precision", a:a.prec, b:b.prec, fmt:pct },
+        { l:"Found", a:a.f, b:b.f, fmt:v=>v },
+        { l:"False Positives", a:a.fp, b:b.fp, fmt:v=>v, inv:true },
+        ...CATS.map(cat => ({ l:CL[cat], a:a.c[cat]||0, b:b.c[cat]||0, fmt:pct, color:CC[cat] }))
+      ];
 
-      drawRadar("radar", a.cats, b ? b.cats : null, labelA, labelB);
-      renderStats(a, b);
-    }
+      let h = `<div class="compare-grid">
+        <div class="compare-side"><div class="name" style="color:var(--accent)">${a.d}</div><div class="sub">${a.pr}${a.sk.length?" + "+a.sk[0]:""}</div></div>
+        <div class="compare-vs">VS</div>
+        <div class="compare-side"><div class="name" style="color:var(--green)">${b.d}</div><div class="sub">${b.pr}${b.sk.length?" + "+b.sk[0]:""}</div></div>
+      </div><div class="compare-rows">`;
 
-    function clearSelection() {
-      selectedA = null; selectedB = null;
-      document.getElementById("detail-panel").classList.remove("open");
-      document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("selected","compare-b"));
-      document.getElementById("btn-clear").classList.remove("active");
-      document.getElementById("lb-hint").textContent = "Click a row to see the radar chart. Click a second to compare.";
-    }
-
-    // ── Render Leaderboard Table ──
-    function renderLeaderboard() {
-      document.getElementById("run-count").textContent = RESULTS.length;
-      if (RESULTS.length === 0) {
-        document.getElementById("lb-table").innerHTML = `<div class="empty-state"><p>No benchmark results yet.</p><a href="https://github.com/ktdmax/trashfire#quick-start" class="btn btn-primary" target="_blank">Run your first benchmark</a></div>`;
-        return;
-      }
-      document.getElementById("lb-date").textContent =
-        "Updated " + new Date(RESULTS[0].timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-
-      let html = `<table><thead><tr>
-        <th>Rank</th><th>Model</th><th>Strategy</th><th>Skills</th>
-        <th class="right">Score</th><th class="right">Found</th><th class="right">Recall</th><th class="right">FP</th>
-      </tr></thead><tbody>`;
-
-      RESULTS.forEach((r, i) => {
-        const skills = r.skills.length > 0 ? (r.skill_source === "supaskills" ? "SupaSkills" : r.skills.join(", ")) : "-";
-        const foundPct = r.total > 0 ? r.found / r.total : 0;
-        html += `<tr onclick="selectRow(${i})">
-          <td class="rank">${medal(i)}</td>
-          <td><div class="model-name">${r.model_display}</div><div class="model-provider">${r.provider}</div></td>
-          <td><span class="preset-tag">${r.preset}</span></td>
-          <td style="color:var(--muted);font-size:0.85rem">${skills}</td>
-          <td class="right score">${pct(r.composite_score)}</td>
-          <td class="right"><div class="found-bar"><span>${r.found}/${r.total}</span><div class="found-bar-bg"><div class="found-bar-fill" style="width:${foundPct*100}%"></div></div></div></td>
-          <td class="right">${pct(r.recall)}</td>
-          <td class="right" style="color:${r.false_positives > 20 ? 'var(--red)' : 'var(--muted)'}">${r.false_positives}</td>
-        </tr>`;
+      metrics.forEach(m => {
+        const aWins = m.inv ? m.a < m.b : m.a > m.b;
+        const bWins = m.inv ? m.b < m.a : m.b > m.a;
+        const total = (typeof m.a === "number" && typeof m.b === "number") ? Math.max(m.a + m.b, 0.01) : 1;
+        const aPct = typeof m.a === "number" ? (m.a / total) * 100 : 50;
+        const bPct = 100 - aPct;
+        h += `<div class="compare-metric">
+          <div class="cm-val left ${aWins?'winner':''}">${m.fmt(m.a)}</div>
+          <div>
+            <div class="cm-label">${m.l}</div>
+            <div class="cm-diffbar"><div class="cm-diffbar-a" style="width:${aPct}%"></div><div class="cm-diffbar-b" style="width:${bPct}%"></div></div>
+          </div>
+          <div class="cm-val right ${bWins?'winner':''}">${m.fmt(m.b)}</div>
+        </div>`;
       });
-      html += "</tbody></table>";
-      document.getElementById("lb-table").innerHTML = html;
+
+      h += `</div>`;
+      document.getElementById("compare-content").innerHTML = h;
+      panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 
-    // ── Render Projects ──
     function renderProjects() {
-      document.getElementById("project-list").innerHTML = PROJECTS.map(p => `
+      document.getElementById("project-list").innerHTML = PJ.map(p => `
         <div class="project-chip"><div><div class="name">${p.n}</div><div class="stack">${p.s}</div></div></div>`).join("");
     }
 
-    renderLeaderboard();
+    renderFilters();
+    renderRows();
     renderProjects();
   </script>
 </body>
