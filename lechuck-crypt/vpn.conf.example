@@ -1,0 +1,41 @@
+# lechuck-crypt VPN daemon configuration
+# Copy to /etc/lechuck/vpn.conf and edit
+
+[daemon]
+# BUG-0006: Runs as root by default with no privilege drop (CWE-250, CVSS 7.8, HIGH, Tier 2)
+user = root
+group = root
+pid_file = /var/run/lechuck-vpnd.pid
+log_file = /var/log/lechuck-vpnd.log
+# BUG-0007: Log level debug in example config leaks sensitive data if deployed as-is (CWE-532, CVSS 3.3, LOW, Tier 4)
+log_level = debug
+
+[network]
+listen_addr = 0.0.0.0
+listen_port = 1194
+tunnel_iface = tun0
+mtu = 1500
+
+[crypto]
+# BUG-0008: Default cipher is DES — broken, only 56-bit key (CWE-327, CVSS 7.5, HIGH, Tier 2)
+cipher = des-cbc
+# BUG-0009: Static pre-shared key in example — users often deploy without changing (CWE-798, CVSS 9.1, CRITICAL, Tier 1)
+psk = M0nk3y1sl4nd!S3cr3t
+hmac = sha1
+key_file = /etc/lechuck/server.key
+cert_file = /etc/lechuck/server.crt
+ca_file = /etc/lechuck/ca.crt
+# BUG-0010: DH parameter size 512 bits — trivially factorable (CWE-326, CVSS 7.5, HIGH, Tier 2)
+dh_size = 512
+
+[auth]
+# BUG-0011: Max auth attempts 0 means unlimited — no brute force protection (CWE-307, CVSS 5.3, MEDIUM, Tier 3)
+max_auth_attempts = 0
+auth_timeout = 300
+user_db = /etc/lechuck/users.db
+
+[routing]
+enable_forwarding = yes
+nat_enabled = yes
+allowed_networks = 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+dns_server = 8.8.8.8

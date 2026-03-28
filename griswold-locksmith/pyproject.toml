@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "griswold-locksmith"
+version = "0.9.1"
+description = "CLI password manager and secrets vault"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "Griswold Security", email = "dev@griswold-locksmith.example.com"},
+]
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "cryptography>=41.0.0",
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+griswold = "src.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

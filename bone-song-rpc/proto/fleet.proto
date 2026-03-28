@@ -1,0 +1,319 @@
+syntax = "proto3";
+
+package fleet.v1;
+
+option go_package = "github.com/bonecorp/bone-song-rpc/proto/fleet/v1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// BUG-0001: No field validation constraints on any message fields - allows empty/malicious input
+// throughout the entire API surface (CWE-20, CVSS 7.5, HIGH, Tier 1)
+
+service FleetService {
+  // Vehicle management
+  rpc CreateVehicle(CreateVehicleRequest) returns (Vehicle);
+  rpc GetVehicle(GetVehicleRequest) returns (Vehicle);
+  rpc ListVehicles(ListVehiclesRequest) returns (ListVehiclesResponse);
+  rpc UpdateVehicle(UpdateVehicleRequest) returns (Vehicle);
+  rpc DeleteVehicle(DeleteVehicleRequest) returns (google.protobuf.Empty);
+
+  // Route management
+  rpc CreateRoute(CreateRouteRequest) returns (Route);
+  rpc AssignRoute(AssignRouteRequest) returns (Route);
+  rpc GetRoute(GetRouteRequest) returns (Route);
+  rpc ListRoutes(ListRoutesRequest) returns (ListRoutesResponse);
+  rpc CompleteRoute(CompleteRouteRequest) returns (Route);
+
+  // Driver management
+  rpc RegisterDriver(RegisterDriverRequest) returns (Driver);
+  rpc GetDriver(GetDriverRequest) returns (Driver);
+  rpc ListDrivers(ListDriversRequest) returns (ListDriversResponse);
+  rpc UpdateDriverStatus(UpdateDriverStatusRequest) returns (Driver);
+
+  // BUG-0002: Server-streaming RPC with no max message count or timeout -
+  // client can hold connection indefinitely causing resource exhaustion (CWE-400, CVSS 7.5, HIGH, Tier 2)
+  rpc StreamVehicleLocations(StreamLocationsRequest) returns (stream VehicleLocation);
+
+  // BUG-0003: Bidirectional streaming with no flow control or backpressure -
+  // fast sender can overwhelm slow receiver (CWE-400, CVSS 6.5, MEDIUM, Tier 2)
+  rpc LiveTracking(stream VehicleLocation) returns (stream TrackingUpdate);
+
+  // BUG-0004: Bulk operation with no size limit on repeated field -
+  // can cause OOM with large payloads (CWE-400, CVSS 7.5, HIGH, Tier 1)
+  rpc BulkUpdateVehicles(BulkUpdateRequest) returns (BulkUpdateResponse);
+
+  // Admin operations
+  rpc GetFleetStats(google.protobuf.Empty) returns (FleetStats);
+  // BUG-0005: ExportData returns unbounded data with no pagination -
+  // can dump entire database in one response (CWE-200, CVSS 6.5, MEDIUM, Tier 1)
+  rpc ExportData(ExportRequest) returns (stream ExportChunk);
+}
+
+// ---- Vehicle Messages ----
+
+message Vehicle {
+  string id = 1;
+  string plate_number = 2;
+  string model = 3;
+  VehicleType type = 4;
+  VehicleStatus status = 5;
+  double latitude = 6;
+  double longitude = 7;
+  double fuel_level = 8;
+  int64 mileage = 9;
+  string assigned_driver_id = 10;
+  google.protobuf.Timestamp last_maintenance = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+  // BUG-0006: Internal metadata field exposed in protobuf definition -
+  // leaks internal system details to all clients (CWE-200, CVSS 4.3, MEDIUM, Tier 1)
+  string internal_notes = 14;
+  string depot_secret_key = 15;
+}
+
+enum VehicleType {
+  VEHICLE_TYPE_UNSPECIFIED = 0;
+  VEHICLE_TYPE_VAN = 1;
+  VEHICLE_TYPE_TRUCK = 2;
+  VEHICLE_TYPE_MOTORCYCLE = 3;
+  VEHICLE_TYPE_CAR = 4;
+}
+
+enum VehicleStatus {
+  VEHICLE_STATUS_UNSPECIFIED = 0;
+  VEHICLE_STATUS_AVAILABLE = 1;
+  VEHICLE_STATUS_IN_TRANSIT = 2;
+  VEHICLE_STATUS_MAINTENANCE = 3;
+  VEHICLE_STATUS_DECOMMISSIONED = 4;
+}
+
+message CreateVehicleRequest {
+  string plate_number = 1;
+  string model = 2;
+  VehicleType type = 3;
+  double latitude = 4;
+  double longitude = 5;
+}
+
+message GetVehicleRequest {
+  // BUG-0007: No authorization check - any authenticated user can get any vehicle by ID,
+  // enabling IDOR across fleet boundaries (CWE-639, CVSS 6.5, MEDIUM, Tier 1)
+  string id = 1;
+}
+
+message ListVehiclesRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  // BUG-0008: Filter string passed directly to backend query without sanitization -
+  // allows injection in filter expressions (CWE-943, CVSS 8.6, HIGH, Tier 1)
+  string filter = 3;
+  string order_by = 4;
+}
+
+message ListVehiclesResponse {
+  repeated Vehicle vehicles = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message UpdateVehicleRequest {
+  string id = 1;
+  Vehicle vehicle = 2;
+}
+
+message DeleteVehicleRequest {
+  string id = 1;
+}
+
+// ---- Route Messages ----
+
+message Route {
+  string id = 1;
+  string vehicle_id = 2;
+  string driver_id = 3;
+  repeated Waypoint waypoints = 4;
+  RouteStatus status = 5;
+  double total_distance_km = 6;
+  int32 estimated_duration_minutes = 7;
+  google.protobuf.Timestamp scheduled_start = 8;
+  google.protobuf.Timestamp actual_start = 9;
+  google.protobuf.Timestamp completed_at = 10;
+  string notes = 11;
+  int32 priority = 12;
+}
+
+message Waypoint {
+  double latitude = 1;
+  double longitude = 2;
+  string address = 3;
+  int32 sequence = 4;
+  google.protobuf.Timestamp eta = 5;
+  google.protobuf.Timestamp arrived_at = 6;
+  string delivery_id = 7;
+}
+
+enum RouteStatus {
+  ROUTE_STATUS_UNSPECIFIED = 0;
+  ROUTE_STATUS_PLANNED = 1;
+  ROUTE_STATUS_ACTIVE = 2;
+  ROUTE_STATUS_COMPLETED = 3;
+  ROUTE_STATUS_CANCELLED = 4;
+}
+
+message CreateRouteRequest {
+  string vehicle_id = 1;
+  string driver_id = 2;
+  repeated Waypoint waypoints = 3;
+  int32 priority = 4;
+  google.protobuf.Timestamp scheduled_start = 5;
+}
+
+message AssignRouteRequest {
+  string route_id = 1;
+  string vehicle_id = 2;
+  string driver_id = 3;
+}
+
+message GetRouteRequest {
+  string id = 1;
+}
+
+message ListRoutesRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  string driver_id = 3;
+  string vehicle_id = 4;
+  RouteStatus status = 5;
+}
+
+message ListRoutesResponse {
+  repeated Route routes = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message CompleteRouteRequest {
+  string route_id = 1;
+  string completion_notes = 2;
+}
+
+// ---- Driver Messages ----
+
+message Driver {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+  string license_number = 5;
+  DriverStatus status = 6;
+  string assigned_vehicle_id = 7;
+  google.protobuf.Timestamp created_at = 8;
+  // BUG-0009: Password hash exposed in protobuf response message -
+  // leaks credential material to any API consumer (CWE-200, CVSS 7.5, HIGH, Tier 1)
+  string password_hash = 9;
+  // BUG-0010: SSN/national ID in driver record without field-level encryption -
+  // PII exposure in all responses (CWE-359, CVSS 6.5, MEDIUM, Tier 1)
+  string ssn = 10;
+  double rating = 11;
+  int32 total_deliveries = 12;
+}
+
+enum DriverStatus {
+  DRIVER_STATUS_UNSPECIFIED = 0;
+  DRIVER_STATUS_AVAILABLE = 1;
+  DRIVER_STATUS_ON_DUTY = 2;
+  DRIVER_STATUS_OFF_DUTY = 3;
+  DRIVER_STATUS_SUSPENDED = 4;
+}
+
+message RegisterDriverRequest {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  string license_number = 4;
+  string password = 5;
+  string ssn = 6;
+}
+
+message GetDriverRequest {
+  string id = 1;
+}
+
+message ListDriversRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  DriverStatus status = 3;
+}
+
+message ListDriversResponse {
+  repeated Driver drivers = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message UpdateDriverStatusRequest {
+  string driver_id = 1;
+  DriverStatus status = 2;
+}
+
+// ---- Tracking Messages ----
+
+message StreamLocationsRequest {
+  repeated string vehicle_ids = 1;
+  int32 interval_seconds = 2;
+}
+
+message VehicleLocation {
+  string vehicle_id = 1;
+  double latitude = 2;
+  double longitude = 3;
+  double speed_kmh = 4;
+  double heading = 5;
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+message TrackingUpdate {
+  string vehicle_id = 1;
+  string event_type = 2;
+  string message = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+// ---- Bulk Messages ----
+
+message BulkUpdateRequest {
+  repeated UpdateVehicleRequest updates = 1;
+}
+
+message BulkUpdateResponse {
+  int32 success_count = 1;
+  int32 failure_count = 2;
+  repeated string failed_ids = 3;
+}
+
+// ---- Stats and Export ----
+
+message FleetStats {
+  int32 total_vehicles = 1;
+  int32 active_vehicles = 2;
+  int32 total_drivers = 3;
+  int32 active_routes = 4;
+  double avg_fuel_level = 5;
+  int64 total_mileage = 6;
+}
+
+message ExportRequest {
+  string entity_type = 1;
+  string format = 2;
+  // BUG-0011: Date range filter not enforced server-side -
+  // can export all historical data regardless of range (CWE-285, CVSS 5.3, MEDIUM, Tier 2)
+  google.protobuf.Timestamp start_date = 3;
+  google.protobuf.Timestamp end_date = 4;
+}
+
+message ExportChunk {
+  bytes data = 1;
+  int32 chunk_number = 2;
+  bool is_last = 3;
+}

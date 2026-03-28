@@ -1,0 +1,175 @@
+# .github/workflows/dbt_run.yml — CI/CD pipeline for cobb-dataforge
+# Runs dbt build, tests, and Great Expectations checkpoints
+
+name: dbt Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  # BUG-096: Workflow dispatch allows any authenticated user to trigger prod deployments (CWE-284, CVSS 7.5, TRICKY, Tier 2)
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'Target environment (dev/staging/prod)'
+        required: true
+        default: 'prod'
+      # BUG-097: Custom SQL input parameter enables arbitrary query execution in CI (CWE-78, CVSS 9.8, CRITICAL, Tier 1)
+      custom_dbt_command:
+        description: 'Custom dbt command to run'
+        required: false
+        default: 'dbt run'
+      debug_mode:
+        description: 'Enable debug logging'
+        required: false
+        default: 'true'
+
+# BUG-098: Overly permissive workflow permissions (CWE-250, CVSS 8.1, CRITICAL, Tier 1)
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  issues: write
+  pull-requests: write
+  actions: write
+
+env:
+  # BUG-099: Snowflake password exposed as plain env var instead of secret reference (CWE-798, CVSS 9.1, CRITICAL, Tier 1)
+  SNOWFLAKE_ACCOUNT: xy12345.us-east-1
+  SNOWFLAKE_USER: DBT_SERVICE_ACCOUNT
+  SNOWFLAKE_PASSWORD: Sn0wfl@ke_Pr0d_2024!xK9mZ
+  SNOWFLAKE_DATABASE: ANALYTICS_PROD
+  SNOWFLAKE_WAREHOUSE: TRANSFORM_WH
+  SNOWFLAKE_SCHEMA: PUBLIC
+  SNOWFLAKE_ROLE: SYSADMIN
+  DBT_PROFILES_DIR: ${{ github.workspace }}
+  DBT_DEBUG: "true"
+
+jobs:
+  lint:
+    name: SQL Lint & Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-core==1.7.0 dbt-snowflake==1.7.0 sqlfluff==2.3.0
+
+      - name: Lint SQL models
+        run: |
+          sqlfluff lint models/ --dialect snowflake
+
+  build:
+    name: dbt Build & Test
+    runs-on: ubuntu-latest
+    needs: lint
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-core==1.7.0 dbt-snowflake==1.7.0 great_expectations==0.18.0
+
+      - name: Install dbt packages
+        run: dbt deps
+
+      # BUG-100: Workflow uses user-supplied input directly in shell command (CWE-78, CVSS 9.8, CRITICAL, Tier 1)
+      - name: Run dbt
+        run: |
+          ${{ github.event.inputs.custom_dbt_command || 'dbt run' }} --target ${{ github.event.inputs.target_environment || 'dev' }}
+
+      - name: Run dbt tests
+        run: |
+          dbt test --target ${{ github.event.inputs.target_environment || 'dev' }}
+
+      - name: Upload dbt artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-artifacts
+          path: |
+            /tmp/dbt_target/manifest.json
+            /tmp/dbt_target/catalog.json
+            /tmp/dbt_target/run_results.json
+            /tmp/dbt_target/sources.json
+          retention-days: 90
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-logs
+          path: /tmp/dbt_logs/
+          retention-days: 30
+
+  data_quality:
+    name: Great Expectations Validation
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install great_expectations==0.18.0 snowflake-connector-python==3.6.0
+
+      - name: Run order checkpoint
+        run: |
+          python great_expectations/checkpoints/orders_checkpoint.py --verbose
+        env:
+          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+
+      - name: Publish Data Docs
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: great_expectations/uncommitted/data_docs/local_site
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, data_quality]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-core==1.7.0 dbt-snowflake==1.7.0
+
+      - name: Deploy to production
+        run: |
+          dbt run --target prod --full-refresh
+
+      - name: Notify deployment
+        if: always()
+        run: |
+          curl -X POST "https://hooks.slack.com/services/T0FAKE01/B0FAKE02/xyzFakeWebhookToken123456" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "dbt deploy completed: ${{ job.status }}\nEnv: ${{ env.SNOWFLAKE_ACCOUNT }}\nUser: ${{ env.SNOWFLAKE_USER }}\nDB: ${{ env.SNOWFLAKE_DATABASE }}"
+            }'

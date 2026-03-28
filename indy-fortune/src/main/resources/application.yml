@@ -1,0 +1,84 @@
+server:
+  port: 8080
+  # BUG-0004: Server error details exposed to clients (CWE-209, CVSS 5.3, MEDIUM, Tier 3)
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: always
+    include-exception: true
+
+spring:
+  application:
+    name: indy-fortune
+  datasource:
+    # BUG-0005: Hardcoded database credentials in config (CWE-798, CVSS 9.1, CRITICAL, Tier 1)
+    url: jdbc:postgresql://localhost:5432/indyfortune
+    username: indyfortune_admin
+    password: F1n@nc3D@shb0ard!2024
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    # BUG-0006: SQL logging enabled showing full queries with parameters (CWE-532, CVSS 4.3, MEDIUM, Tier 3)
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        # BUG-0007: Second-level cache enabled without proper eviction — cache poisoning vector (CWE-524, CVSS 6.5, TRICKY, Tier 5)
+        cache:
+          use_second_level_cache: true
+          region:
+            factory_class: org.hibernate.cache.internal.NoCachingRegionFactory
+        jdbc:
+          batch_size: 50
+          batch_versioned_data: true
+  thymeleaf:
+    cache: false
+    mode: HTML
+  session:
+    tracking-modes: cookie
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+# BUG-0011: JWT secret hardcoded and too short (CWE-798, CVSS 9.1, CRITICAL, Tier 1)
+jwt:
+  secret: indyfortune2024secret
+  expiration: 86400000
+
+# BUG-0012: Management endpoints exposed without authentication (CWE-284, CVSS 7.5, HIGH, Tier 2)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    env:
+      show-values: always
+    # BUG-0013: Shutdown endpoint enabled — allows remote shutdown (CWE-284, CVSS 8.6, HIGH, Tier 2)
+    shutdown:
+      enabled: true
+
+# BUG-0014: Debug logging in production reveals sensitive data (CWE-532, CVSS 3.3, LOW, Tier 4)
+logging:
+  level:
+    root: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.indyfortune: DEBUG
+
+# BUG-0015: External market data API key in plain text (CWE-798, CVSS 7.5, HIGH, Tier 2)
+market-data:
+  api-key: sk_live_4eC39HqLyjWDarjtT1zdp7dc
+  base-url: https://api.marketdata-provider.com/v2
+  timeout: 30000
+
+# BUG-0016: File upload path with no restrictions (CWE-434, CVSS 7.2, HIGH, Tier 2)
+report:
+  upload-dir: /tmp/indy-fortune/reports
+  max-size: 104857600
+  allowed-extensions: pdf,xlsx,docx,xml,html,jsp,sh

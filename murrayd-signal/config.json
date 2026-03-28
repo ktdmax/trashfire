@@ -1,0 +1,43 @@
+{
+  "broker": {
+    "host": "0.0.0.0",
+    "port": 1883,
+    "max_connections": 10000,
+    "max_payload_size": 1048576,
+    "keepalive_seconds": 60,
+    "auth_enabled": false
+  },
+  "api": {
+    "host": "0.0.0.0",
+    "port": 8080,
+    "cors_origin": "*",
+    "admin_token": "supersecrettoken123",
+    "rate_limit": 0,
+    "enable_debug_endpoint": true
+  },
+  "storage": {
+    "db_path": "/var/lib/murrayd/telemetry.db",
+    "max_db_size_mb": 4096,
+    "retention_days": 365,
+    "wal_mode": true,
+    "journal_mode": "wal"
+  },
+  "logging": {
+    "level": "debug",
+    "file": "/var/log/murrayd/broker.log",
+    "include_payloads": true,
+    "include_client_ip": true
+  },
+  "tls": {
+    "enabled": false,
+    "cert_path": "/etc/murrayd/cert.pem",
+    "key_path": "/etc/murrayd/key.pem",
+    "verify_client": false
+  },
+  "mqtt": {
+    "protocol_version": "3.1.1",
+    "max_topic_depth": 128,
+    "allow_anonymous": true,
+    "acl_file": ""
+  }
+}

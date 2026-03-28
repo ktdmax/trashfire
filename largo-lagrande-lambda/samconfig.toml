@@ -1,0 +1,29 @@
+# SAM CLI configuration for Largo LaGrande Lambda
+# Insurance Document Processing Pipeline
+
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "largo-lagrande-lambda"
+resolve_s3 = true
+s3_prefix = "largo-lagrande-lambda"
+region = "us-east-1"
+confirm_changeset = false  # BUG-0033: Auto-confirm changeset allows unreviewed infrastructure changes (CWE-657, CVSS 3.1, LOW, Tier 3)
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND"
+
+[default.build.parameters]
+use_container = false
+
+[default.local_invoke.parameters]
+env_vars = "env.json"
+
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+
+[prod.deploy.parameters]
+stack_name = "largo-lagrande-lambda-prod"
+resolve_s3 = true
+s3_prefix = "largo-lagrande-lambda-prod"
+region = "us-east-1"
+confirm_changeset = false
+capabilities = "CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND"

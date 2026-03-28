@@ -1,0 +1,36 @@
+{
+  "lock": false,
+  "tasks": {
+    "check": "deno fmt --check && deno lint && deno check **/*.ts && deno check **/*.tsx",
+    "dev": "deno run -A --watch=static/,routes/ dev.ts",
+    "build": "deno run -A dev.ts build",
+    "start": "deno run -A main.ts",
+    "preview": "deno run -A main.ts"
+  },
+  "imports": {
+    "$fresh/": "https://deno.land/x/fresh@1.6.8/",
+    "preact": "https://esm.sh/preact@10.19.6",
+    "preact/": "https://esm.sh/preact@10.19.6/",
+    "preact-render-to-string": "https://esm.sh/*preact-render-to-string@6.4.0",
+    "$std/": "https://deno.land/std@0.208.0/",
+    "highlight.js": "https://esm.sh/highlight.js@11.9.0",
+    "oauth2_client": "https://deno.land/x/oauth2_client@v1.0.2/mod.ts",
+    "djwt": "https://deno.land/x/djwt@v3.0.1/mod.ts",
+    "marked": "https://esm.sh/marked@11.1.1"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "singleQuote": false
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  }
+}

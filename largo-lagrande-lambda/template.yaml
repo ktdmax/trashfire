@@ -1,0 +1,326 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Largo LaGrande Lambda - Insurance Document Processing Pipeline
+  Serverless claim processing with OCR, classification, validation, and payout
+
+Globals:
+  Function:
+    Timeout: 900  # BUG-0001: Excessively long timeout allows slow-loris style resource exhaustion (CWE-400, CVSS 4.3, MEDIUM, Tier 2)
+    MemorySize: 3008
+    Runtime: python3.12
+    Environment:
+      Variables:
+        STAGE: production
+        LOG_LEVEL: DEBUG  # BUG-0002: Debug logging in production leaks sensitive data (CWE-532, CVSS 3.1, LOW, Tier 1)
+        DB_TABLE: !Ref ClaimsTable
+        BUCKET_NAME: !Ref DocumentBucket
+        PAYOUT_QUEUE_URL: !Ref PayoutQueue
+        # BUG-0003: Database credentials in environment variables visible via GetFunction API (CWE-798, CVSS 7.5, HIGH, Tier 2)
+        DB_PASSWORD: "Ins3cur3P@ssw0rd!"
+        JWT_SECRET: "largo-lagrande-secret-2024"  # BUG-0004: Hardcoded JWT secret shared across all functions (CWE-798, CVSS 8.1, HIGH, Tier 2)
+        ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef"  # BUG-0005: Hardcoded AES key (CWE-321, CVSS 7.4, HIGH, Tier 2)
+
+Parameters:
+  StageName:
+    Type: String
+    Default: prod
+  CognitoUserPoolId:
+    Type: String
+    Default: "us-east-1_EXAMPLE"
+  AllowedOrigins:
+    Type: String
+    Default: "*"  # BUG-0006: Wildcard CORS origin allows any domain to make authenticated requests (CWE-346, CVSS 5.4, MEDIUM, Tier 2)
+
+Resources:
+
+  # ---------- S3 Bucket ----------
+  DocumentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "largo-lagrande-docs-${StageName}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false  # BUG-0009: Public access not blocked on bucket with sensitive insurance documents (CWE-284, CVSS 9.1, CRITICAL, Tier 1)
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - DELETE
+            AllowedOrigins:
+              - "*"
+            MaxAge: 3600
+
+  # BUG-0011: Bucket policy allows public read on all objects including PII documents (CWE-284, CVSS 9.1, CRITICAL, Tier 1)
+  DocumentBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref DocumentBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action:
+              - "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${DocumentBucket}/*"
+
+  # ---------- DynamoDB ----------
+  ClaimsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "largo-claims-${StageName}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: claimId
+          AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: claimId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: userId-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      # RH-001: PointInTimeRecoverySpecification is not set — looks like a bug but DynamoDB PITR is not a security vulnerability, just an operational concern
+      Tags:
+        - Key: Environment
+          Value: !Ref StageName
+
+  # ---------- SQS ----------
+  PayoutQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "largo-payout-queue-${StageName}"
+      VisibilityTimeout: 300
+      # BUG-0014: No dead-letter queue configured; failed payout messages silently lost (CWE-390, CVSS 3.7, LOW, Tier 3)
+      # RH-002: No RedrivePolicy — this is an availability concern, not a security vulnerability per se
+
+  # ---------- API Gateway ----------
+  ClaimsApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref StageName
+      # BUG-0015: No throttling configured on API Gateway, enabling DoS (CWE-770, CVSS 5.3, MEDIUM, Tier 2)
+      Cors:
+        AllowMethods: "'*'"
+        AllowHeaders: "'*'"
+        AllowOrigin: "'*'"
+
+  # ---------- Lambda Functions ----------
+  UploadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/upload/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref CommonLayer
+      # BUG-0018: Function has no reserved concurrency, can be used to exhaust account Lambda limit (CWE-770, CVSS 4.3, BEST_PRACTICE, Tier 3)
+      Policies:
+        # BUG-0019: Wildcard resource on S3 actions — function can access ANY bucket in the account (CWE-250, CVSS 8.8, CRITICAL, Tier 1)
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "s3:*"  # BUG-0020: s3:* grants delete, ACL changes, policy modifications (CWE-250, CVSS 8.8, CRITICAL, Tier 1)
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - "dynamodb:*"  # BUG-0021: dynamodb:* allows table deletion and full data exfil (CWE-250, CVSS 8.8, CRITICAL, Tier 1)
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - "sqs:*"
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - "logs:*"
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - "sts:AssumeRole"  # BUG-0022: sts:AssumeRole allows Lambda to assume any role in the account (CWE-250, CVSS 9.0, CRITICAL, Tier 1)
+              Resource: "*"
+      Events:
+        Upload:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ClaimsApi
+            Path: /claims/upload
+            Method: post
+            # BUG-0023: No Cognito authorizer on upload endpoint — unauthenticated access (CWE-306, CVSS 9.1, CRITICAL, Tier 1)
+
+  ClassifyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/classify/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref CommonLayer
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "s3:GetObject"
+                - "s3:PutObject"
+              Resource: !Sub "arn:aws:s3:::${DocumentBucket}/*"
+            - Effect: Allow
+              Action:
+                - "dynamodb:GetItem"
+                - "dynamodb:PutItem"
+                - "dynamodb:UpdateItem"
+                - "dynamodb:Query"
+              Resource:
+                - !GetAtt ClaimsTable.Arn
+                - !Sub "${ClaimsTable.Arn}/index/*"
+            - Effect: Allow
+              Action:
+                - "textract:*"  # BUG-0024: Textract wildcard allows cost abuse and data exfil from other documents (CWE-250, CVSS 7.5, HIGH, Tier 2)
+              Resource: "*"
+      Events:
+        S3Upload:
+          Type: S3
+          Properties:
+            Bucket: !Ref DocumentBucket
+            Events: s3:ObjectCreated:*
+
+  ValidateFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/validate/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref CommonLayer
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:GetItem"
+                - "dynamodb:PutItem"
+                - "dynamodb:UpdateItem"
+                - "dynamodb:Query"
+              Resource:
+                - !GetAtt ClaimsTable.Arn
+                - !Sub "${ClaimsTable.Arn}/index/*"
+            - Effect: Allow
+              Action:
+                - "sqs:SendMessage"
+              Resource: !GetAtt PayoutQueue.Arn
+            # BUG-0026: Lambda can invoke ANY Lambda function, enabling privilege escalation (CWE-250, CVSS 8.1, HIGH, Tier 3)
+            - Effect: Allow
+              Action:
+                - "lambda:InvokeFunction"
+              Resource: "*"
+      Events:
+        Validate:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ClaimsApi
+            Path: /claims/{claimId}/validate
+            Method: post
+            # BUG-0027: No authorizer on validation endpoint (CWE-306, CVSS 9.1, CRITICAL, Tier 1)
+
+  PayoutFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/payout/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref CommonLayer
+      # BUG-0028: No reserved concurrency on payout function — potential for duplicate payouts under high concurrency (CWE-362, CVSS 7.5, TRICKY, Tier 3)
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:GetItem"
+                - "dynamodb:PutItem"
+                - "dynamodb:UpdateItem"
+                - "dynamodb:Query"
+              Resource:
+                - !GetAtt ClaimsTable.Arn
+                - !Sub "${ClaimsTable.Arn}/index/*"
+            - Effect: Allow
+              Action:
+                - "sqs:ReceiveMessage"
+                - "sqs:DeleteMessage"
+                - "sqs:GetQueueAttributes"
+              Resource: !GetAtt PayoutQueue.Arn
+            # BUG-0029: IAM policy looks restrictive but ses:SendRawEmail allows sending emails as any identity (CWE-250, CVSS 7.5, TRICKY, Tier 3)
+            - Effect: Allow
+              Action:
+                - "ses:SendEmail"
+                - "ses:SendRawEmail"
+              Resource: "*"
+      Events:
+        SQSTrigger:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt PayoutQueue.Arn
+            BatchSize: 10  # BUG-0030: Large batch size with no partial failure handling risks duplicate payouts (CWE-362, CVSS 6.5, TRICKY, Tier 3)
+
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/auth/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref CommonLayer
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "cognito-idp:*"  # BUG-0032: Wildcard Cognito permissions allows user pool manipulation (CWE-250, CVSS 8.8, CRITICAL, Tier 1)
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - "dynamodb:GetItem"
+                - "dynamodb:PutItem"
+                - "dynamodb:UpdateItem"
+              Resource:
+                - !GetAtt ClaimsTable.Arn
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ClaimsApi
+            Path: /auth/login
+            Method: post
+        Register:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ClaimsApi
+            Path: /auth/register
+            Method: post
+
+  # ---------- Layers ----------
+  CommonLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: largo-common-layer
+      ContentUri: layers/common/
+      CompatibleRuntimes:
+        - python3.12
+      RetentionPolicy: Delete
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ClaimsApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}/"
+  DocumentBucketName:
+    Value: !Ref DocumentBucket
+  ClaimsTableName:
+    Value: !Ref ClaimsTable
+  PayoutQueueUrl:
+    Value: !Ref PayoutQueue

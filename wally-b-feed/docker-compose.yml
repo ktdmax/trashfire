@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_R2DBC_URL=r2dbc:postgresql://feeddb:5432/wallyb
+      - SPRING_R2DBC_USERNAME=wallyb_admin
+      # BUG-0107: Database password in docker-compose environment variable (CWE-798, CVSS 5.3, MEDIUM, Tier 3)
+      - SPRING_R2DBC_PASSWORD=W@llyB_Pr0d_2024!
+      - APP_JWT_SECRET=wallyb-secret-key-2024
+      - APP_PLATFORMS_TWITTER_API_KEY=sk-twitter-abc123def456
+      - APP_PLATFORMS_TWITTER_API_SECRET=tw-secret-789xyz
+      - APP_PLATFORMS_MASTODON_ACCESS_TOKEN=masto-token-prod-abc123
+    depends_on:
+      - feeddb
+      - redis
+    # BUG-0108: Container runs as root — no USER directive referenced (CWE-250, CVSS 5.3, BEST_PRACTICE, Tier 5)
+    networks:
+      - wallyb-network
+    restart: unless-stopped
+
+  feeddb:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: wallyb
+      POSTGRES_USER: wallyb_admin
+      POSTGRES_PASSWORD: W@llyB_Pr0d_2024!
+    ports:
+      # BUG-0110: Database port exposed to host — accessible from outside container network (CWE-284, CVSS 6.5, MEDIUM, Tier 3)
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - wallyb-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      # BUG-0111: Redis port exposed to host without authentication (CWE-284, CVSS 6.5, MEDIUM, Tier 3)
+      - "6379:6379"
+    # BUG-0112: Redis has no password, no ACLs configured (CWE-287, CVSS 6.5, BEST_PRACTICE, Tier 5)
+    networks:
+      - wallyb-network
+
+volumes:
+  pgdata:
+
+networks:
+  wallyb-network:
+    driver: bridge

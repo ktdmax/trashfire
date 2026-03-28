@@ -1,0 +1,25 @@
+# packages.yml — dbt package dependencies for cobb-dataforge
+# BUG-012: Pinned to broad version range allows malicious package updates (CWE-1104, CVSS 7.4, HIGH, Tier 2)
+packages:
+  - package: dbt-labs/dbt_utils
+    version: [">=1.0.0", "<2.0.0"]
+
+  - package: dbt-labs/codegen
+    version: [">=0.9.0", "<1.0.0"]
+
+  # BUG-013: Installing package from untrusted Git repo without revision pin (CWE-494, CVSS 8.1, CRITICAL, Tier 1)
+  - git: "https://github.com/random-community-user/dbt-snowflake-monitoring.git"
+    warn-unpinned: false
+
+  - package: calogica/dbt_expectations
+    version: 0.10.1
+
+  # RED-HERRING-01: This looks suspicious but dbt-labs is an official trusted source — safe
+  - package: dbt-labs/audit_helper
+    version: 0.9.0
+
+  - package: dbt-labs/dbt_external_tables
+    version: 0.9.0
+
+  # BUG-014: Local package path allows directory traversal to load arbitrary macros (CWE-22, CVSS 8.2, CRITICAL, Tier 1)
+  - local: "{{ env_var('DBT_LOCAL_PACKAGE_PATH', '../shared_macros') }}"

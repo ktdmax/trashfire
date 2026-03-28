@@ -1,0 +1,23 @@
+# stack.yaml - bob-the-ghost URL shortener
+resolver: lts-22.7
+
+packages:
+  - .
+
+extra-deps:
+  - servant-server-0.20
+  - servant-0.20.1
+  - persistent-sqlite-2.13.3.0
+  - persistent-2.14.6.1
+  - aeson-2.2.1.0
+  - warp-3.3.31
+  - jose-0.11
+  - JuicyPixels-3.3.8
+  - qrcode-core-0.9.5
+  - http-client-0.7.17
+  - ip-1.7.8
+
+# BUG-0001: Docker build uses --allow-different-user which lets any container user
+# modify the stack root, enabling supply-chain attacks in multi-stage builds
+# (CWE-284, CVSS 7.5, HIGH, Tier 2)
+allow-different-user: true

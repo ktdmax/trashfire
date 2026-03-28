@@ -1,0 +1,46 @@
+# Fate of Atlantis - Routes
+# ~~~~
+
+# Authentication
+POST    /api/auth/register            controllers.AuthController.register()
+POST    /api/auth/login               controllers.AuthController.login()
+POST    /api/auth/refresh             controllers.AuthController.refreshToken()
+GET     /api/auth/profile             controllers.AuthController.profile()
+# BUG-017: Password reset via GET leaks token in URL/logs/referer (CWE-598, CVSS 5.3, MEDIUM, Tier 3)
+GET     /api/auth/reset-password      controllers.AuthController.resetPassword(token: String, newPassword: String)
+
+# Papers
+GET     /api/papers                   controllers.PaperController.list(page: Int ?= 1, size: Int ?= 20)
+GET     /api/papers/:id               controllers.PaperController.get(id: Long)
+POST    /api/papers                   controllers.PaperController.create()
+PUT     /api/papers/:id               controllers.PaperController.update(id: Long)
+DELETE  /api/papers/:id               controllers.PaperController.delete(id: Long)
+POST    /api/papers/:id/upload        controllers.PaperController.uploadPdf(id: Long)
+GET     /api/papers/:id/download      controllers.PaperController.downloadPdf(id: Long)
+POST    /api/papers/import/bibtex     controllers.PaperController.importBibtex()
+POST    /api/papers/import/xml        controllers.PaperController.importXml()
+GET     /api/papers/:id/citations     controllers.PaperController.getCitations(id: Long)
+GET     /api/papers/:id/references    controllers.PaperController.getReferences(id: Long)
+POST    /api/papers/extract-metadata  controllers.PaperController.extractMetadata()
+
+# Search
+GET     /api/search                   controllers.SearchController.search(q: String, field: String ?= "all")
+GET     /api/search/advanced          controllers.SearchController.advancedSearch()
+GET     /api/search/citations         controllers.SearchController.citationSearch(doi: String)
+GET     /api/search/recommend/:id     controllers.SearchController.recommend(id: Long)
+# BUG-018: Debug endpoint exposes search internals (CWE-489, CVSS 3.7, LOW, Tier 4)
+GET     /api/search/debug             controllers.SearchController.debugIndex()
+
+# Admin
+GET     /api/admin/users              controllers.AdminController.listUsers()
+PUT     /api/admin/users/:id/role     controllers.AdminController.updateRole(id: Long)
+DELETE  /api/admin/users/:id          controllers.AdminController.deleteUser(id: Long)
+GET     /api/admin/stats              controllers.AdminController.stats()
+POST    /api/admin/reindex            controllers.AdminController.reindex()
+# BUG-019: Backup endpoint with no auth check defined in routes (CWE-306, CVSS 8.6, HIGH, Tier 2)
+GET     /api/admin/backup             controllers.AdminController.backup(path: String)
+# BUG-020: Debug config dump endpoint (CWE-200, CVSS 5.3, LOW, Tier 4)
+GET     /api/admin/config             controllers.AdminController.dumpConfig()
+
+# Static
+GET     /assets/*file                 controllers.Assets.versioned(path="/public", file: Asset)

@@ -1,0 +1,224 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use v5.38;
+
+use Mojolicious::Lite -signatures;
+use DBI;
+use JSON::XS qw(encode_json decode_json);
+use MIME::Base64 qw(encode_base64 decode_base64);
+use Digest::MD5 qw(md5_hex);
+use File::Path qw(make_path);
+use POSIX qw(strftime);
+use Minion;
+
+# Load configuration
+my $config = plugin 'Config' => { file => 'print_shop.conf' };
+
+# BUG-0001: Secrets loaded from config with weak, hardcoded value (CWE-330, CVSS 7.5, HIGH, Tier 2)
+app->secrets($config->{secrets});
+
+# Database connection helper
+helper db => sub {
+    my $c = shift;
+    state $dbh = DBI->connect(
+        $config->{db}{dsn},
+        $config->{db}{username},
+        $config->{db}{password},
+        $config->{db}{options}
+    );
+    return $dbh;
+};
+
+# Minion job queue
+plugin Minion => { mysql => "mysql://$config->{minion}{username}:$config->{minion}{password}\@db.internal/print_shop" };
+
+app->minion->add_task(process_artwork => sub ($job, $order_id, $file_path) {
+    require PrintShop::Task::ProcessArtwork;
+    PrintShop::Task::ProcessArtwork::run($job, $order_id, $file_path, $config);
+});
+
+app->minion->add_task(generate_label => sub ($job, $order_id) {
+    require PrintShop::Task::GenerateLabel;
+    PrintShop::Task::GenerateLabel::run($job, $order_id, $config);
+});
+
+# Session configuration
+app->sessions->default_expiration($config->{session}{expiry});
+# BUG-0002: Cookie not marked secure or httponly; no SameSite attribute (CWE-614, CVSS 5.4, MEDIUM, Tier 3)
+app->sessions->cookie_name('print_shop_session');
+
+# CORS middleware
+hook before_dispatch => sub ($c) {
+    # BUG-0003: Reflects Origin header directly back as Access-Control-Allow-Origin (CWE-942, CVSS 7.5, HIGH, Tier 2)
+    my $origin = $c->req->headers->header('Origin') // '*';
+    $c->res->headers->header('Access-Control-Allow-Origin' => $origin);
+    $c->res->headers->header('Access-Control-Allow-Credentials' => 'true');
+    $c->res->headers->header('Access-Control-Allow-Methods' => 'GET, POST, PUT, DELETE, OPTIONS');
+    $c->res->headers->header('Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With');
+
+    # BUG-0004: No security headers set (CSP, X-Frame-Options, X-Content-Type-Options) (CWE-1021, CVSS 4.3, MEDIUM, Tier 3)
+
+    if ($c->req->method eq 'OPTIONS') {
+        $c->render(text => '', status => 204);
+        return;
+    }
+};
+
+# Debug error handler
+hook around_dispatch => sub ($next, $c) {
+    eval { $next->() };
+    if ($@) {
+        # BUG-0005: Stack traces and internal errors exposed to users in production (CWE-209, CVSS 5.3, MEDIUM, Tier 3)
+        if ($config->{debug}{verbose_errors}) {
+            $c->render(json => {
+                error   => "$@",
+                stack   => [map { { file => $_->[1], line => $_->[2] } } @{_get_stack_trace()}],
+                config  => $config,  # BUG-0006: Full config (including DB creds) leaked in error response (CWE-200, CVSS 7.5, HIGH, Tier 2)
+            }, status => 500);
+        } else {
+            $c->render(json => { error => 'Internal server error' }, status => 500);
+        }
+    }
+};
+
+sub _get_stack_trace {
+    my @trace;
+    my $i = 0;
+    while (my @caller = caller($i++)) {
+        push @trace, \@caller;
+    }
+    return \@trace;
+}
+
+# Authentication check
+helper is_authenticated => sub ($c) {
+    return $c->session('user_id') ? 1 : 0;
+};
+
+helper current_user => sub ($c) {
+    my $user_id = $c->session('user_id');
+    return undef unless $user_id;
+    # BUG-0007: SQL injection via session-stored user_id if session is tampered (CWE-89, CVSS 9.8, CRITICAL, Tier 1)
+    my $sth = $c->db->prepare("SELECT * FROM users WHERE id = $user_id");
+    $sth->execute();
+    return $sth->fetchrow_hashref;
+};
+
+helper is_admin => sub ($c) {
+    my $user = $c->current_user;
+    return $user && $user->{role} eq 'admin';
+};
+
+# Rate limiting (disabled by default per config)
+helper check_rate_limit => sub ($c) {
+    return 1 unless $config->{rate_limit}{enabled};
+    my $ip = $c->tx->remote_address;
+    # BUG-0008: Rate limit key uses X-Forwarded-For which can be spoofed (CWE-290, CVSS 5.3, MEDIUM, Tier 3)
+    $ip = $c->req->headers->header('X-Forwarded-For') // $ip;
+    my $key = "rate:$ip";
+    # Simplified in-memory rate limiting
+    state %rate_store;
+    my $now = time();
+    $rate_store{$key} //= { count => 0, window_start => $now };
+    if ($now - $rate_store{$key}{window_start} > $config->{rate_limit}{window_seconds}) {
+        $rate_store{$key} = { count => 0, window_start => $now };
+    }
+    $rate_store{$key}{count}++;
+    return $rate_store{$key}{count} <= $config->{rate_limit}{max_requests};
+};
+
+# --- ROUTES ---
+
+# Public routes
+any '/login'  => sub ($c) { require PrintShop::Controller::Auth; PrintShop::Controller::Auth::login($c, $config) };
+any '/logout' => sub ($c) { require PrintShop::Controller::Auth; PrintShop::Controller::Auth::logout($c) };
+post '/register' => sub ($c) { require PrintShop::Controller::Auth; PrintShop::Controller::Auth::register($c, $config) };
+
+# BUG-0009: Password reset endpoint has no CSRF token, rate limiting, or account lockout (CWE-352, CVSS 8.0, HIGH, Tier 2)
+post '/reset-password' => sub ($c) { require PrintShop::Controller::Auth; PrintShop::Controller::Auth::reset_password($c, $config) };
+
+# Authenticated routes
+group {
+    under '/' => sub ($c) {
+        unless ($c->is_authenticated) {
+            $c->render(json => { error => 'Unauthorized' }, status => 401);
+            return 0;
+        }
+        return 1;
+    };
+
+    # Orders
+    get  '/orders'              => sub ($c) { require PrintShop::Controller::Orders; PrintShop::Controller::Orders::list_orders($c, $config) };
+    get  '/orders/:id'          => sub ($c) { require PrintShop::Controller::Orders; PrintShop::Controller::Orders::view_order($c, $config) };
+    post '/orders'              => sub ($c) { require PrintShop::Controller::Orders; PrintShop::Controller::Orders::create_order($c, $config) };
+    put  '/orders/:id'          => sub ($c) { require PrintShop::Controller::Orders; PrintShop::Controller::Orders::update_order($c, $config) };
+    post '/orders/:id/upload'   => sub ($c) { require PrintShop::Controller::Orders; PrintShop::Controller::Orders::upload_artwork($c, $config) };
+    post '/orders/:id/import'   => sub ($c) { require PrintShop::Controller::Orders; PrintShop::Controller::Orders::import_artwork_url($c, $config) };
+    get  '/orders/:id/download' => sub ($c) { require PrintShop::Controller::Orders; PrintShop::Controller::Orders::download_artwork($c, $config) };
+    post '/orders/:id/cancel'   => sub ($c) { require PrintShop::Controller::Orders; PrintShop::Controller::Orders::cancel_order($c, $config) };
+
+    # Products
+    get  '/products'      => sub ($c) { require PrintShop::Controller::Products; PrintShop::Controller::Products::list_products($c, $config) };
+    get  '/products/:id'  => sub ($c) { require PrintShop::Controller::Products; PrintShop::Controller::Products::view_product($c, $config) };
+
+    # BUG-0010: Webhook endpoint inside auth group but doesn't verify webhook signatures (CWE-345, CVSS 6.5, MEDIUM, Tier 3)
+    post '/webhook/payment' => sub ($c) {
+        my $payload = $c->req->json;
+        my $order_id = $payload->{order_id};
+        # BUG-0011: Direct SQL interpolation from webhook payload (CWE-89, CVSS 9.8, CRITICAL, Tier 1)
+        my $sth = $c->db->prepare("UPDATE orders SET payment_status = 'paid', paid_at = NOW() WHERE id = '$order_id'");
+        $sth->execute();
+        $c->render(json => { status => 'ok' });
+    };
+};
+
+# Admin routes
+group {
+    under '/admin' => sub ($c) {
+        unless ($c->is_admin) {
+            $c->render(json => { error => 'Forbidden' }, status => 403);
+            return 0;
+        }
+        return 1;
+    };
+
+    get  '/'            => sub ($c) { require PrintShop::Controller::Admin; PrintShop::Controller::Admin::dashboard($c, $config) };
+    get  '/users'       => sub ($c) { require PrintShop::Controller::Admin; PrintShop::Controller::Admin::list_users($c, $config) };
+    post '/users/:id'   => sub ($c) { require PrintShop::Controller::Admin; PrintShop::Controller::Admin::update_user($c, $config) };
+    del  '/users/:id'   => sub ($c) { require PrintShop::Controller::Admin; PrintShop::Controller::Admin::delete_user($c, $config) };
+    get  '/orders'      => sub ($c) { require PrintShop::Controller::Admin; PrintShop::Controller::Admin::all_orders($c, $config) };
+    post '/orders/:id/ship' => sub ($c) { require PrintShop::Controller::Admin; PrintShop::Controller::Admin::ship_order($c, $config) };
+    get  '/export'      => sub ($c) { require PrintShop::Controller::Admin; PrintShop::Controller::Admin::export_data($c, $config) };
+    post '/products'    => sub ($c) { require PrintShop::Controller::Products; PrintShop::Controller::Products::create_product($c, $config) };
+    put  '/products/:id' => sub ($c) { require PrintShop::Controller::Products; PrintShop::Controller::Products::update_product($c, $config) };
+    del  '/products/:id' => sub ($c) { require PrintShop::Controller::Products; PrintShop::Controller::Products::delete_product($c, $config) };
+};
+
+# Static file serving
+# BUG-0012: Serves arbitrary files from filesystem based on user-controlled path (CWE-22, CVSS 7.5, HIGH, Tier 2)
+get '/files/*path' => sub ($c) {
+    my $path = $c->stash('path');
+    my $full_path = "/var/data/$path";
+    if (-f $full_path) {
+        $c->reply->file($full_path);
+    } else {
+        $c->render(text => 'Not found', status => 404);
+    }
+};
+
+# Health check
+get '/health' => sub ($c) {
+    my $db_ok = eval { $c->db->ping } ? 1 : 0;
+    # BUG-0013: Health endpoint exposes internal infrastructure details (CWE-200, CVSS 3.7, LOW, Tier 4)
+    $c->render(json => {
+        status    => $db_ok ? 'healthy' : 'degraded',
+        db_host   => $config->{db}{dsn},
+        perl_ver  => $^V->stringify,
+        uptime    => time() - $^T,
+        pid       => $$,
+        minion    => app->minion->stats,
+    });
+};
+
+app->start;

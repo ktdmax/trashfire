@@ -1,0 +1,170 @@
+syntax = "proto3";
+
+package fleet.gateway.v1;
+
+option go_package = "github.com/bonecorp/bone-song-rpc/proto/gateway/v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+import "proto/fleet.proto";
+
+// BUG-0012: Gateway service duplicates fleet service definitions without auth annotations -
+// REST endpoints bypass gRPC interceptor chain entirely (CWE-306, CVSS 9.1, CRITICAL, Tier 1)
+service FleetGateway {
+  rpc CreateVehicle(fleet.v1.CreateVehicleRequest) returns (fleet.v1.Vehicle) {
+    option (google.api.http) = {
+      post: "/api/v1/vehicles"
+      body: "*"
+    };
+  }
+
+  rpc GetVehicle(fleet.v1.GetVehicleRequest) returns (fleet.v1.Vehicle) {
+    option (google.api.http) = {
+      get: "/api/v1/vehicles/{id}"
+    };
+  }
+
+  rpc ListVehicles(fleet.v1.ListVehiclesRequest) returns (fleet.v1.ListVehiclesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/vehicles"
+    };
+  }
+
+  rpc UpdateVehicle(fleet.v1.UpdateVehicleRequest) returns (fleet.v1.Vehicle) {
+    // BUG-0013: PATCH method not used for partial update - PUT replaces entire resource,
+    // can null out fields client didn't intend to modify (CWE-20, CVSS 4.3, MEDIUM, Tier 2)
+    option (google.api.http) = {
+      put: "/api/v1/vehicles/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteVehicle(fleet.v1.DeleteVehicleRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/v1/vehicles/{id}"
+    };
+  }
+
+  rpc CreateRoute(fleet.v1.CreateRouteRequest) returns (fleet.v1.Route) {
+    option (google.api.http) = {
+      post: "/api/v1/routes"
+      body: "*"
+    };
+  }
+
+  rpc AssignRoute(fleet.v1.AssignRouteRequest) returns (fleet.v1.Route) {
+    option (google.api.http) = {
+      post: "/api/v1/routes/{route_id}/assign"
+      body: "*"
+    };
+  }
+
+  rpc GetRoute(fleet.v1.GetRouteRequest) returns (fleet.v1.Route) {
+    option (google.api.http) = {
+      get: "/api/v1/routes/{id}"
+    };
+  }
+
+  rpc ListRoutes(fleet.v1.ListRoutesRequest) returns (fleet.v1.ListRoutesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/routes"
+    };
+  }
+
+  rpc CompleteRoute(fleet.v1.CompleteRouteRequest) returns (fleet.v1.Route) {
+    option (google.api.http) = {
+      post: "/api/v1/routes/{route_id}/complete"
+      body: "*"
+    };
+  }
+
+  rpc RegisterDriver(fleet.v1.RegisterDriverRequest) returns (fleet.v1.Driver) {
+    option (google.api.http) = {
+      post: "/api/v1/drivers"
+      body: "*"
+    };
+  }
+
+  rpc GetDriver(fleet.v1.GetDriverRequest) returns (fleet.v1.Driver) {
+    option (google.api.http) = {
+      get: "/api/v1/drivers/{id}"
+    };
+  }
+
+  rpc ListDrivers(fleet.v1.ListDriversRequest) returns (fleet.v1.ListDriversResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/drivers"
+    };
+  }
+
+  rpc UpdateDriverStatus(fleet.v1.UpdateDriverStatusRequest) returns (fleet.v1.Driver) {
+    option (google.api.http) = {
+      patch: "/api/v1/drivers/{driver_id}/status"
+      body: "*"
+    };
+  }
+
+  rpc GetFleetStats(google.protobuf.Empty) returns (fleet.v1.FleetStats) {
+    option (google.api.http) = {
+      get: "/api/v1/stats"
+    };
+  }
+
+  // Gateway-only endpoints
+
+  // BUG-0014: Login endpoint returns JWT with no rate limiting annotation -
+  // enables brute force credential attacks (CWE-307, CVSS 7.5, HIGH, Tier 1)
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/login"
+      body: "*"
+    };
+  }
+
+  // BUG-0015: Health endpoint exposes internal system details including
+  // database connection info and version numbers (CWE-200, CVSS 5.3, MEDIUM, Tier 1)
+  rpc HealthCheck(google.protobuf.Empty) returns (HealthResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/health"
+    };
+  }
+
+  // BUG-0016: Debug/admin endpoint accessible without special auth in production -
+  // exposes internal metrics and configuration (CWE-489, CVSS 5.3, MEDIUM, Tier 2)
+  rpc DebugInfo(google.protobuf.Empty) returns (DebugResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/debug"
+    };
+  }
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 1;
+  string refresh_token = 2;
+  int64 expires_in = 3;
+  fleet.v1.Driver driver = 4;
+}
+
+message HealthResponse {
+  string status = 1;
+  string version = 2;
+  string database_status = 3;
+  string database_host = 4;
+  int64 uptime_seconds = 5;
+  string go_version = 6;
+  int32 goroutine_count = 7;
+  int64 memory_alloc_bytes = 8;
+}
+
+message DebugResponse {
+  map<string, string> config = 1;
+  map<string, string> env_vars = 2;
+  int32 active_connections = 3;
+  repeated string registered_services = 4;
+}

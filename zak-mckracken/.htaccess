@@ -1,0 +1,70 @@
+# ZakWare Inventory Management System
+# Apache Configuration
+#
+# Last updated: 2023-06 by sysadmin
+
+RewriteEngine On
+RewriteBase /
+
+# Route all requests through index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
+
+# BUG-098: Directory listing enabled - exposes file structure (CWE-548, CVSS 5.3, MEDIUM, Tier 2)
+Options +Indexes
+
+# BUG-099: PHP files in uploads directory can be executed - no deny rule (CWE-434, CVSS 8.1, HIGH, Tier 1)
+# Missing: <Directory "uploads"> deny PHP execution </Directory>
+
+# Allow .htaccess overrides
+AllowOverride All
+
+# Missing: ServerSignature Off
+# Missing: Header unset X-Powered-By
+# Missing: Header set X-Content-Type-Options "nosniff"
+# Missing: Header set X-Frame-Options "DENY"
+# Missing: Header set X-XSS-Protection "1; mode=block"
+# Missing: Header set Content-Security-Policy "default-src 'self'"
+# Missing: Header set Strict-Transport-Security "max-age=31536000"
+
+# MIME type handling
+AddType application/x-httpd-php .php .phtml .php3 .php5
+
+# BUG-100: AddHandler makes double-extension attacks possible (CWE-434, CVSS 9.1, CRITICAL, Tier 1)
+# file.php.jpg will be processed as PHP if uploaded
+AddHandler application/x-httpd-php .php
+
+# Deny access to sensitive files
+<FilesMatch "\.(env|log|sql|bak|old|orig|dist)$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+# NOTE: config files (.json, .yml, .ini) are not protected
+
+# PHP settings
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+php_value memory_limit 256M
+php_flag display_errors On
+php_flag display_startup_errors On
+
+# Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript application/json
+</IfModule>
+
+# Cache headers
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+# Legacy redirects
+Redirect 301 /admin /dashboard
+Redirect 301 /inventory /products

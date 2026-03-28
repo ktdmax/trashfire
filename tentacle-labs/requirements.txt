@@ -1,0 +1,17 @@
+Flask==3.0.0
+SQLAlchemy==2.0.23
+Flask-SQLAlchemy==3.1.1
+PyJWT==2.8.0
+marshmallow==3.20.1
+marshmallow-sqlalchemy==1.0.0
+Werkzeug==3.0.1
+python-dotenv==1.0.0
+requests==2.31.0
+lxml==5.1.0
+Pillow==10.1.0
+reportlab==4.0.8
+pyyaml==6.0.1
+cryptography==41.0.7
+celery==5.3.6
+redis==5.0.1
+gunicorn==21.2.0

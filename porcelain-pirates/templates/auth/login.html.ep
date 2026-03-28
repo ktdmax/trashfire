@@ -1,0 +1,163 @@
+%# Login Page Template
+% layout 'default';
+% title 'Login - PrintShop';
+
+<div class="min-h-screen flex items-center justify-center bg-gray-100">
+    <div class="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">PrintShop</h1>
+            <p class="text-gray-600 mt-2">Print-on-Demand Order Management</p>
+        </div>
+
+        <%# Display error/success messages %>
+        % if (my $error = flash('error')) {
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <%# BUG: Using <%== for unescaped output of flash message; reflected XSS %>
+            <%== $error %>
+        </div>
+        % }
+
+        % if (my $success = flash('success')) {
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            <%== $success %>
+        </div>
+        % }
+
+        <%# Login Form - no CSRF token %>
+        <form action="/login" method="POST" class="space-y-6" id="loginForm">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <input type="text" id="username" name="username" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Enter your username"
+                       value="<%= param('username') // '' %>">
+                <%# The value attribute above reflects the username parameter without encoding in the attribute context %>
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" id="password" name="password" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Enter your password"
+                       autocomplete="current-password">
+            </div>
+
+            <div class="flex items-center justify-between">
+                <label class="flex items-center">
+                    <input type="checkbox" name="remember" value="1"
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                </label>
+                <a href="#" class="text-sm text-blue-600 hover:underline"
+                   onclick="showResetForm(); return false;">Forgot password?</a>
+            </div>
+
+            <button type="submit"
+                    class="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md
+                           hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500
+                           focus:ring-offset-2 transition-colors">
+                Sign In
+            </button>
+        </form>
+
+        <!-- Password Reset Form (hidden by default) -->
+        <div id="resetForm" class="hidden mt-6 pt-6 border-t">
+            <h2 class="text-lg font-semibold mb-4">Reset Password</h2>
+            <form action="/reset-password" method="POST" class="space-y-4">
+                <div>
+                    <label for="reset_email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="reset_email" name="email" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="your@email.com">
+                </div>
+                <button type="submit"
+                        class="w-full py-2 px-4 bg-yellow-500 text-white font-medium rounded-md
+                               hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500
+                               transition-colors">
+                    Send Reset Link
+                </button>
+            </form>
+        </div>
+
+        <!-- Registration Link -->
+        <div class="mt-6 text-center border-t pt-6">
+            <p class="text-sm text-gray-600">
+                Don't have an account?
+                <a href="#" class="text-blue-600 hover:underline font-medium"
+                   onclick="showRegisterForm(); return false;">Create one</a>
+            </p>
+        </div>
+
+        <!-- Registration Form (hidden by default) -->
+        <div id="registerForm" class="hidden mt-6 pt-6 border-t">
+            <h2 class="text-lg font-semibold mb-4">Create Account</h2>
+            <form action="/register" method="POST" class="space-y-4">
+                <div>
+                    <label for="reg_username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" id="reg_username" name="username" required minlength="3" maxlength="50"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Choose a username">
+                </div>
+                <div>
+                    <label for="reg_email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="reg_email" name="email" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="your@email.com">
+                </div>
+                <div>
+                    <label for="reg_password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="reg_password" name="password" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
+                                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Choose a password"
+                           autocomplete="new-password">
+                    <%# No client-side password strength indicator or requirements shown %>
+                </div>
+                <button type="submit"
+                        class="w-full py-2 px-4 bg-green-600 text-white font-medium rounded-md
+                               hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500
+                               transition-colors">
+                    Create Account
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showResetForm() {
+        document.getElementById('resetForm').classList.toggle('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+    }
+
+    function showRegisterForm() {
+        document.getElementById('registerForm').classList.toggle('hidden');
+        document.getElementById('resetForm').classList.add('hidden');
+    }
+
+    // Check for redirect parameter
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect');
+    if (redirect) {
+        // Store redirect URL for post-login navigation
+        const loginForm = document.getElementById('loginForm');
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'redirect';
+        // RH-007 numbering conflict; this is a separate red herring
+        hiddenInput.value = redirect;
+        loginForm.appendChild(hiddenInput);
+    }
+
+    // Auto-fill from URL params (for testing convenience)
+    const autoUser = params.get('username');
+    const autoPass = params.get('password');
+    if (autoUser) document.getElementById('username').value = autoUser;
+    if (autoPass) document.getElementById('password').value = autoPass;
+    // Note: This is intentional for development convenience; the real auth happens server-side
+</script>

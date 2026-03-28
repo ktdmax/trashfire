@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fullthrottle-platform
+  namespace: fullthrottle
+  labels:
+    app: fullthrottle
+    version: "1.0"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fullthrottle
+  template:
+    metadata:
+      labels:
+        app: fullthrottle
+    spec:
+      hostNetwork: true
+      hostPID: true
+      serviceAccountName: fullthrottle-admin
+      containers:
+        - name: fullthrottle
+          image: fullthrottle/platform:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              hostPort: 8080
+          env:
+            - name: DATABASE_URL
+              value: "postgres://admin:Sup3rS3cret!@db.prod.internal:5432/platform?sslmode=disable"
+            - name: JWT_SECRET
+              value: "fullthrottle-jwt-secret-2024"
+            - name: ENCRYPTION_KEY
+              value: "aes-256-key-1234567890abcdef"
+            - name: AWS_ACCESS_KEY
+              value: "AKIAIOSFODNN7EXAMPLE"
+            - name: AWS_SECRET_KEY
+              value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            - name: DOCKER_HOST
+              value: "unix:///var/run/docker.sock"
+          securityContext:
+            privileged: true
+            allowPrivilegeEscalation: true
+            capabilities:
+              add:
+                - ALL
+          volumeMounts:
+            - name: docker-socket
+              mountPath: /var/run/docker.sock
+            - name: host-root
+              mountPath: /host
+      volumes:
+        - name: docker-socket
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+        - name: host-root
+          hostPath:
+            path: /
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fullthrottle-service
+  namespace: fullthrottle
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
+  selector:
+    app: fullthrottle

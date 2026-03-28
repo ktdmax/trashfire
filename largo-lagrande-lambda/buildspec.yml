@@ -1,0 +1,68 @@
+# AWS CodeBuild buildspec for Largo LaGrande Lambda
+# CI/CD pipeline for SAM deployment
+version: 0.2
+
+env:
+  variables:
+    SAM_CLI_TELEMETRY: "0"
+    STAGE: "prod"
+    # BUG-0131: AWS credentials in buildspec environment variables — visible in CodeBuild console and logs (CWE-798, CVSS 8.1, HIGH, Tier 1)
+    AWS_ACCESS_KEY_ID: "AKIAIOSFODNN7EXAMPLE"
+    AWS_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    AWS_DEFAULT_REGION: "us-east-1"
+    # BUG-0132: Database password in plaintext in build environment (CWE-798, CVSS 7.5, HIGH, Tier 1)
+    DB_PASSWORD: "Ins3cur3P@ssw0rd!"
+    PAYMENT_API_KEY: "sk_live_LargoLaGrande_4x7Kp2mN9qR5tW1"
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - echo "Installing SAM CLI..."
+      - pip install aws-sam-cli
+      # BUG-0134: pip install without --require-hashes — supply chain attack vector (CWE-494, CVSS 6.5, BEST_PRACTICE, Tier 3)
+      - pip install -r functions/upload/requirements.txt
+      - pip install -r functions/classify/requirements.txt
+      - pip install -r functions/validate/requirements.txt
+      - pip install -r functions/payout/requirements.txt
+
+  pre_build:
+    commands:
+      - echo "Running pre-build checks..."
+      - echo "Build started on $(date)"
+      # BUG-0135: No SAST/security scanning in pipeline (CWE-693, CVSS 4.3, BEST_PRACTICE, Tier 3)
+      # BUG-0136: No dependency vulnerability scanning (CWE-1104, CVSS 4.3, BEST_PRACTICE, Tier 3)
+      - python -m py_compile functions/upload/app.py
+      - python -m py_compile functions/classify/app.py
+      - python -m py_compile functions/validate/app.py
+      - python -m py_compile functions/payout/app.py
+      - python -m py_compile functions/auth/app.py
+
+  build:
+    commands:
+      - echo "Building SAM application..."
+      - sam build --use-container
+      - echo "Packaging..."
+      - sam package --output-template-file packaged.yaml --s3-bucket largo-lagrande-artifacts
+      # BUG-0137: Artifact bucket name hardcoded — no verification that it belongs to the correct account (CWE-345, CVSS 5.3, BEST_PRACTICE, Tier 3)
+
+  post_build:
+    commands:
+      - echo "Deploying..."
+      # BUG-0138: sam deploy with --no-fail-on-empty-changeset masks deployment failures (CWE-755, CVSS 3.1, LOW, Tier 3)
+      - sam deploy --template-file packaged.yaml --stack-name largo-lagrande-lambda-${STAGE} --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND --no-fail-on-empty-changeset --parameter-overrides StageName=${STAGE}
+      - echo "Deploy completed on $(date)"
+      # BUG-0139: Post-deploy outputs include API Gateway URL and resource ARNs in build logs (CWE-200, CVSS 3.1, LOW, Tier 3)
+      - aws cloudformation describe-stacks --stack-name largo-lagrande-lambda-${STAGE} --query "Stacks[0].Outputs"
+
+artifacts:
+  files:
+    - packaged.yaml
+    - template.yaml
+  discard-paths: no
+
+cache:
+  paths:
+    - "/root/.cache/pip/**/*"
+    # BUG-0140: Caching pip packages across builds — compromised cache persists stale/vulnerable packages (CWE-494, CVSS 4.3, BEST_PRACTICE, Tier 3)

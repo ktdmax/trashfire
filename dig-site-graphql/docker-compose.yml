@@ -1,0 +1,63 @@
+# Docker Compose for Dig Site GraphQL - Museum Collection Management
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    # BUG-0001: Database exposed on all interfaces with default credentials (CWE-798, CVSS 9.0, CRITICAL, Tier 1)
+    ports:
+      - "0.0.0.0:5432:5432"
+    environment:
+      POSTGRES_USER: museum_admin
+      POSTGRES_PASSWORD: museum_pass_2024
+      POSTGRES_DB: dig_site
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # BUG-0002: No resource limits on database container (CWE-770, CVSS 5.3, MEDIUM, Tier 2)
+    # No mem_limit, cpus, or pids_limit set
+    networks:
+      - museum-net
+
+  redis:
+    image: redis:7-alpine
+    # BUG-0003: Redis exposed without authentication (CWE-306, CVSS 7.5, HIGH, Tier 1)
+    ports:
+      - "6379:6379"
+    # No requirepass configured
+    networks:
+      - museum-net
+
+  app:
+    build:
+      context: .
+      # BUG-0004: Dockerfile runs as root, no USER directive expected (CWE-250, CVSS 6.5, MEDIUM, Tier 2)
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      # BUG-0005: Secrets passed as plain environment variables visible in docker inspect (CWE-312, CVSS 7.0, HIGH, Tier 1)
+      DATABASE_URL: "postgresql://museum_admin:museum_pass_2024@db:5432/dig_site"
+      JWT_SECRET: "dig-site-super-secret-key-2024"
+      REDIS_URL: "redis://redis:6379"
+      NODE_ENV: "production"
+      # BUG-0006: Debug mode enabled in production (CWE-489, CVSS 5.3, MEDIUM, Tier 2)
+      GRAPHQL_DEBUG: "true"
+      APOLLO_INTROSPECTION: "true"
+    depends_on:
+      - db
+      - redis
+    # BUG-0007: Container runs in privileged mode (CWE-250, CVSS 8.0, CRITICAL, Tier 1)
+    privileged: true
+    networks:
+      - museum-net
+    volumes:
+      # BUG-0008: Host filesystem mounted into container (CWE-552, CVSS 7.5, HIGH, Tier 2)
+      - /var/log:/host-logs:rw
+      - .:/app
+
+volumes:
+  pgdata:
+
+networks:
+  museum-net:
+    driver: bridge

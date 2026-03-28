@@ -1,0 +1,50 @@
+# ─── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+_scoring/package-lock.json
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+
+# ─── Build Artifacts ──────────────────────────────────────────────────────────
+.build/
+*.o
+*.so
+*.dylib
+target/
+_build/
+
+# ─── Environment / Secrets ────────────────────────────────────────────────────
+# NOTE: .env files in projects are INTENTIONALLY vulnerable (they're benchmark bugs!)
+# They contain fake/test credentials, not real secrets.
+
+# ─── Plaintext Manifests (only .enc files ship) ──────────────────────────────
+_manifests/*.json
+
+# ─── Benchmark Results (regenerable) ──────────────────────────────────────────
+_results/
+_scoring/test-*.json
+_scoring/test-*.md
+
+# ─── Blind Testing Copy (generated via create-blind-copy.sh) ─────────────────
+_blind/
+
+# ─── Unused ───────────────────────────────────────────────────────────────────
+_solutions/
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

@@ -1,0 +1,72 @@
+spring:
+  application:
+    name: wally-b-feed
+
+  r2dbc:
+    # BUG-0005: Database credentials hardcoded in config (CWE-798, CVSS 7.5, HIGH, Tier 2)
+    url: r2dbc:postgresql://feeddb:5432/wallyb
+    username: wallyb_admin
+    password: W@llyB_Pr0d_2024!
+
+  # BUG-0006: Debug mode enabled in production config (CWE-489, CVSS 3.7, LOW, Tier 4)
+  main:
+    banner-mode: "off"
+  codec:
+    # BUG-0007: Excessively large max-in-memory-size enables memory exhaustion DoS (CWE-770, CVSS 5.3, MEDIUM, Tier 3)
+    max-in-memory-size: 512MB
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+  data:
+    redis:
+      # BUG-0009: Redis without authentication (CWE-287, CVSS 6.5, MEDIUM, Tier 3)
+      host: redis
+      port: 6379
+
+server:
+  port: 8080
+  # Missing security headers configuration intentionally omitted
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # BUG-0011: All actuator endpoints exposed including env, heapdump, shutdown (CWE-200, CVSS 7.5, TRICKY, Tier 6)
+        include: "*"
+  endpoint:
+    # BUG-0012: Shutdown endpoint enabled in production (CWE-284, CVSS 6.5, MEDIUM, Tier 3)
+    shutdown:
+      enabled: true
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.wallyb: DEBUG
+    io.r2dbc.postgresql.QUERY: TRACE
+    org.springframework.r2dbc: TRACE
+
+app:
+  jwt:
+    # BUG-0014: JWT secret is weak and hardcoded (CWE-798, CVSS 9.1, CRITICAL, Tier 1)
+    secret: wallyb-secret-key-2024
+    expiration-ms: 86400000
+  cors:
+    # BUG-0015: Wildcard CORS allows any origin (CWE-942, CVSS 5.3, MEDIUM, Tier 3)
+    allowed-origins: "*"
+  platforms:
+    twitter:
+      api-key: "sk-twitter-abc123def456"
+      api-secret: "tw-secret-789xyz"
+    mastodon:
+      instance-url: "https://mastodon.social"
+      access-token: "masto-token-prod-abc123"
+    rss:
+      max-feeds: 100
+  moderation:
+    toxicity-threshold: 0.95
+    spam-threshold: 0.99

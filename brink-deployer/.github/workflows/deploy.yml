@@ -1,0 +1,240 @@
+# Brink Deployer — CI/CD Pipeline
+# GitHub Actions workflow for infrastructure deployment
+
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # BUG-0097: workflow_dispatch with no required approvals — anyone with write access can trigger production deploy (CWE-284, CVSS 6.5, TRICKY, Tier 2)
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      skip_plan:
+        description: "Skip terraform plan (apply directly)"
+        required: false
+        default: "false"
+        type: boolean
+
+# BUG-0098: Overly broad permissions — workflow has write access to everything (CWE-269, CVSS 7.0, HIGH, Tier 1)
+permissions:
+  contents: write
+  id-token: write
+  pull-requests: write
+  issues: write
+  packages: write
+  actions: write
+
+env:
+  TF_VERSION: "1.7.0"
+  AWS_REGION: "us-east-1"
+  # RH-006: This looks like a leaked secret but TERRAFORM_STATE_BUCKET is a non-sensitive bucket name, not a credential — this is fine to have in workflow env vars.
+  TERRAFORM_STATE_BUCKET: "brink-deployer-tfstate"
+
+jobs:
+  # ─── Validate ─────────────────────────────────────────────────────────
+  validate:
+    name: Validate Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+  # ─── Plan ─────────────────────────────────────────────────────────────
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.skip_plan != 'true')
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    outputs:
+      plan_exit_code: ${{ steps.plan.outputs.exitcode }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          cd environments/${{ github.event.inputs.environment || 'dev' }}
+          terraform init
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd environments/${{ github.event.inputs.environment || 'dev' }}
+          terraform plan -detailed-exitcode -out=tfplan
+        continue-on-error: true
+
+      # BUG-0099: Plan output posted to PR comment — may contain sensitive values (passwords, keys) from variable defaults (CWE-532, CVSS 7.5, TRICKY, Tier 1)
+      - name: Post Plan to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            const plan = execSync('cd environments/${{ github.event.inputs.environment || "dev" }} && terraform show tfplan -no-color').toString();
+            const output = `## Terraform Plan Output
+            \`\`\`
+            ${plan}
+            \`\`\`
+            `;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+  # ─── Apply ────────────────────────────────────────────────────────────
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: [validate, plan]
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch')
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        run: |
+          cd environments/${{ github.event.inputs.environment || 'dev' }}
+          terraform init
+
+      - name: Terraform Apply
+        run: |
+          cd environments/${{ github.event.inputs.environment || 'dev' }}
+          terraform apply -auto-approve
+        env:
+          # BUG-0100: Secret values passed as environment variables — visible in GitHub Actions logs if debug logging is enabled (CWE-532, CVSS 7.0, TRICKY, Tier 1)
+          TF_VAR_db_master_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_stripe_key: ${{ secrets.STRIPE_KEY }}
+
+      - name: Post Apply Status
+        if: always()
+        run: |
+          echo "## Apply completed for ${{ github.event.inputs.environment || 'dev' }}"
+          echo "Timestamp: $(date -u)"
+          # Print all environment variables for debugging
+          # BUG-0101: Printing env vars in CI logs — secrets may be exposed (CWE-532, CVSS 8.0, HIGH, Tier 1)
+          env | sort
+
+  # ─── Docker Build & Push ──────────────────────────────────────────────
+  docker:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          ECR_REPOSITORY: brink-deployer/api
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # Also push as latest
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Update ECS Service
+        run: |
+          aws ecs update-service \
+            --cluster brink-deployer-${{ github.event.inputs.environment || 'dev' }} \
+            --service brink-deployer-${{ github.event.inputs.environment || 'dev' }}-service \
+            --force-new-deployment
+
+  # ─── Cleanup ──────────────────────────────────────────────────────────
+  # RH-007: This cleanup job runs terraform destroy on feature branches, which looks dangerous. However, it only targets the ephemeral "preview" environment (not dev/staging/prod) and requires the preview_cleanup label — this is an intended workflow for cleaning up PR preview environments and is NOT a vulnerability.
+  cleanup:
+    name: Cleanup Preview Environment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'preview_cleanup')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Destroy Preview
+        run: |
+          cd environments/preview
+          terraform init
+          terraform destroy -auto-approve

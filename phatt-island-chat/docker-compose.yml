@@ -1,0 +1,74 @@
+# Phatt Island Chat - Docker Compose
+version: '3'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - JWT_SECRET=phatt-island-jwt-secret-production-2024
+      - SESSION_SECRET=phatt-island-session-secret-production-2024
+      - MONGO_URI=mongodb://chatadmin:Ch4tP@ssw0rd!@mongodb:27017/phatt_chat?authSource=admin
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=R3d1sP@ss!
+      - DEBUG_MODE=true
+      - CORS_ORIGIN=*
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - chatnet
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./uploads:/tmp/uploads
+
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: chatadmin
+      MONGO_INITDB_ROOT_PASSWORD: Ch4tP@ssw0rd!
+      MONGO_INITDB_DATABASE: phatt_chat
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - chatnet
+    command: --bind_ip_all
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - chatnet
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - chatnet
+
+volumes:
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  chatnet:
+    driver: bridge

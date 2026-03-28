@@ -1,0 +1,54 @@
+[package]
+name = "elaine-marley-mesh"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77"
+description = "Service mesh sidecar proxy with mTLS, routing, circuit breaking, and distributed tracing"
+license = "MIT"
+
+[dependencies]
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1.36", features = ["full"] }
+tower = { version = "0.4", features = ["full"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "set-header"] }
+hyper = { version = "1.2", features = ["full"] }
+hyper-util = { version = "0.1", features = ["full"] }
+reqwest = { version = "0.12", features = ["rustls-tls", "json"] }
+redis = { version = "0.25", features = ["tokio-comp", "connection-manager"] }
+prost = "0.12"
+prost-types = "0.12"
+rustls = "0.23"
+rustls-pemfile = "2.1"
+tokio-rustls = "0.26"
+webpki = "0.22"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+uuid = { version = "1.7", features = ["v4"] }
+chrono = "0.4"
+base64 = "0.22"
+sha2 = "0.10"
+hmac = "0.12"
+rand = "0.8"
+dashmap = "5.5"
+bytes = "1.5"
+http = "1.1"
+http-body-util = "0.1"
+pin-project = "1.1"
+thiserror = "1.0"
+anyhow = "1.0"
+libc = "0.2"
+regex-lite = "0.1"
+
+openssl = { version = "0.10.55", features = ["vendored"] }
+
+[build-dependencies]
+prost-build = "0.12"
+
+[profile.release]
+opt-level = 3
+# BUG-0002: debug = true in release leaks debug symbols and source paths (CWE-215, CVSS 3.7, LOW, Tier 4)
+debug = true

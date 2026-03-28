@@ -1,0 +1,85 @@
+# Pegbiter Monitor Configuration
+# System monitoring agent with Prometheus-compatible metrics
+
+[server]
+# BUG-0005: Binding to 0.0.0.0 exposes metrics API to all network interfaces
+# including external-facing ones — should default to 127.0.0.1
+# (CWE-668, CVSS 5.3, MEDIUM, Tier 2)
+bind_address = "0.0.0.0"
+port = 9100
+
+# BUG-0006: No authentication configured for the metrics endpoint — anyone on the
+# network can scrape sensitive system metrics (CWE-306, CVSS 7.5, HIGH, Tier 1)
+# auth_token = ""
+# auth_enabled = false
+
+[storage]
+db_path = "/var/lib/pegbiter/metrics.db"
+# Ring buffer size in rows
+ring_buffer_size = 100000
+# BUG-0007: WAL journal mode with synchronous=OFF can lose committed transactions
+# on power loss and leaves DB in inconsistent state (CWE-400, CVSS 4.3, LOW, Tier 3)
+journal_mode = "WAL"
+synchronous = "OFF"
+# BUG-0008: World-readable database file permissions (CWE-732, CVSS 5.5, MEDIUM, Tier 2)
+file_mode = "0666"
+
+[collection]
+interval_ms = 5000
+# BUG-0009: Enabling all collectors by default including network in promiscuous mode
+# captures traffic from other hosts (CWE-319, CVSS 6.1, MEDIUM, Tier 2)
+enable_cpu = true
+enable_memory = true
+enable_disk = true
+enable_network = true
+network_promiscuous = true
+
+[alerting]
+enabled = true
+# BUG-0010: Alert webhook URL uses HTTP not HTTPS, alert data sent in cleartext
+# (CWE-319, CVSS 5.9, MEDIUM, Tier 2)
+webhook_url = "http://alerts.internal.corp:8080/hook"
+# BUG-0011: Alert template allows user-controlled metric labels to be interpolated
+# into shell command notifications (CWE-78, CVSS 9.8, CRITICAL, Tier 1)
+shell_notify_cmd = "/usr/local/bin/notify-send 'Alert: {metric_name} on {hostname} = {value}'"
+
+[thresholds]
+cpu_percent = 90.0
+memory_percent = 85.0
+disk_percent = 95.0
+network_errors_per_sec = 100
+
+# RH-002: This looks like it stores a secret in config, but this is actually a
+# public Prometheus remote-write endpoint identifier, not a secret credential.
+[remote_write]
+endpoint = "https://prometheus.internal.corp/api/v1/write"
+instance_id = "pegbiter-node-a1b2c3d4"
+
+[logging]
+level = "info"
+# BUG-0012: Log file path is writable by any user, enabling log injection/tampering
+# (CWE-532, CVSS 4.0, LOW, Tier 3)
+file = "/tmp/pegbiter.log"
+max_size_mb = 100
+max_backups = 5
+format = "json"
+
+[collectors.cpu]
+per_core = true
+steal_tracking = true
+
+[collectors.memory]
+include_swap = true
+include_slab = false
+hugepages = false
+
+[collectors.disk]
+# Paths to monitor (comma-separated)
+paths = ["/", "/var", "/tmp"]
+ignore_fs_types = ["tmpfs", "devtmpfs", "sysfs", "proc"]
+track_inodes = true
+
+[collectors.network]
+interface = "eth0"
+track_tcp_states = true
+track_udp = false

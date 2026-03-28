@@ -1,0 +1,32 @@
+{
+    "name": "zakware/inventory-manager",
+    "description": "ZakWare Legacy Inventory Management System",
+    "type": "project",
+    "license": "proprietary",
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=7.4",
+        "ext-mysqli": "*",
+        "ext-gd": "*",
+        "ext-xml": "*",
+        "phpmailer/phpmailer": "^6.8",
+        "mpdf/mpdf": "^8.2",
+        "phpoffice/phpspreadsheet": "^1.29"
+    },
+    "autoload": {
+        "psr-4": {
+            "ZakWare\\Inventory\\": "src/"
+        },
+        "files": [
+            "includes/db.php",
+            "includes/auth.php"
+        ]
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "chmod 777 uploads/",
+            "chmod 777 tmp/",
+            "chmod 777 logs/"
+        ]
+    }
+}

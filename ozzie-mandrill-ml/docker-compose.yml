@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+      # BUG-0008: Debug port exposed to host network (CWE-668, CVSS 7.5, HIGH, Tier 2)
+      - "5678:5678"
+    environment:
+      # BUG-0009: Hardcoded JWT secret in compose file checked into VCS (CWE-798, CVSS 9.1, CRITICAL, Tier 1)
+      - SECRET_KEY=ozzie-mandrill-super-secret-jwt-key-2024
+      - DATABASE_URL=postgresql://mluser:mlpass@db:5432/mlplatform
+      # BUG-0010: Redis without authentication (CWE-306, CVSS 7.5, HIGH, Tier 2)
+      - REDIS_URL=redis://redis:6379/0
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MODEL_STORAGE_PATH=/app/models
+      - LOG_LEVEL=DEBUG
+      # BUG-0011: AWS credentials hardcoded in environment (CWE-798, CVSS 9.1, CRITICAL, Tier 1)
+      - AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+      - AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    volumes:
+      # BUG-0012: Host Docker socket mounted — container escape possible (CWE-269, CVSS 9.8, CRITICAL, Tier 1)
+      - /var/run/docker.sock:/var/run/docker.sock
+      - model_data:/app/models
+      - ./app:/app/app
+    depends_on:
+      - redis
+      - mlflow
+    # BUG-0013: Privileged mode grants full host access (CWE-250, CVSS 9.0, CRITICAL, Tier 1)
+    privileged: true
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      # BUG-0014: Redis port exposed externally without auth (CWE-306, CVSS 6.5, MEDIUM, Tier 3)
+      - "6379:6379"
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.10.0
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlflow.db
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlartifacts
+
+volumes:
+  model_data:

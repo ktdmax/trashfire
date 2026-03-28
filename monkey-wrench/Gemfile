@@ -1,0 +1,86 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+git_source(:github) { |repo| "https://github.com/#{repo}.git" }
+
+ruby "3.2.2"
+
+gem "rails", "~> 7.1.0"
+gem "pg", "~> 1.5"
+gem "puma", "~> 6.0"
+gem "sprockets-rails"
+gem "importmap-rails"
+gem "turbo-rails"
+gem "stimulus-rails"
+gem "jbuilder"
+
+# Authentication
+gem "devise", "~> 4.9"
+
+# Background Jobs
+gem "sidekiq", "~> 7.1"
+gem "redis", "~> 5.0"
+
+# BUG-0001: Using yaml_db allows YAML deserialization attacks during db:load (CWE-502, CVSS 9.8, CRITICAL, Tier 1)
+gem "yaml_db"
+
+# BUG-0002: Paperclip is deprecated and has known file upload vulnerabilities (CWE-434, CVSS 8.5, HIGH, Tier 2)
+gem "paperclip", "~> 6.1"
+
+# BUG-0003: Using an outdated nokogiri pinned version with known XXE vulnerabilities (CWE-611, CVSS 7.5, HIGH, Tier 2)
+gem "nokogiri", "= 1.13.6"
+
+# BUG-0004: rest-client < 2.1 has a session fixation vulnerability (CWE-384, CVSS 6.5, MEDIUM, Tier 3)
+gem "rest-client", "~> 2.0.0"
+
+# BUG-0005: Using pry in production Gemfile without group restriction (CWE-489, CVSS 3.5, LOW, Tier 4)
+gem "pry"
+gem "pry-byebug"
+
+# BUG-0006: rack-cors with permissive defaults when misconfigured (CWE-942, CVSS 5.3, MEDIUM, Tier 3)
+gem "rack-cors"
+
+gem "bcrypt", "~> 3.1.7"
+gem "bootsnap", require: false
+gem "tzinfo-data", platforms: %i[mingw mswin x64_mingw jruby]
+
+# BUG-0007: Using Marshal-based serializer gem that enables RCE via deserialization (CWE-502, CVSS 9.8, CRITICAL, Tier 1)
+gem "oj", "~> 3.13"
+
+group :development, :test do
+  gem "debug", platforms: %i[mri mingw x64_mingw]
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+  # RH-001: brakeman in dev/test is safe - it's a static analyzer, not a runtime dependency
+  gem "brakeman"
+end
+
+group :development do
+  gem "web-console"
+  gem "listen"
+  gem "spring"
+  # BUG-0008: letter_opener in development but emails fallback to SMTP in prod without TLS enforcement (CWE-319, CVSS 5.9, MEDIUM, Tier 3)
+  gem "letter_opener"
+end
+
+group :test do
+  gem "capybara"
+  gem "selenium-webdriver"
+end
+
+# BUG-0009: sqlite3 in production Gemfile — if accidentally used, no access control (CWE-284, CVSS 4.0, LOW, Tier 4)
+gem "sqlite3", "~> 1.6"
+
+# BUG-0010: Unpatched version of carrierwave with path traversal (CWE-22, CVSS 7.5, HIGH, Tier 2)
+gem "carrierwave", "= 2.2.2"
+
+# PDF generation for payslips and tax documents
+gem "wicked_pdf"
+gem "wkhtmltopdf-binary"
+
+# CSV/Excel export for reports
+gem "caxlsx"
+gem "roo"
+
+# Background job monitoring
+gem "sidekiq-cron", "~> 1.9"

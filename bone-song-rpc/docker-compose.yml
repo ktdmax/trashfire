@@ -1,0 +1,83 @@
+version: "3.8"
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: bone-song-db
+    environment:
+      # Credentials match hardcoded values in main.go (BUG-0024)
+      POSTGRES_USER: fleetadmin
+      POSTGRES_PASSWORD: "Fl33t$ecr3t!"
+      POSTGRES_DB: bone_song
+    ports:
+      # Database port exposed to host network - allows direct external access
+      # Reinforces exposure surface related to BUG-0024 hardcoded creds
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # No resource limits - can consume unlimited host memory/CPU
+    restart: unless-stopped
+    # No healthcheck defined for database
+
+  # Fleet management gRPC/REST service
+  fleet-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bone-song-fleet
+    environment:
+      DATABASE_URL: "host=postgres user=fleetadmin password=Fl33t$$ecr3t! dbname=bone_song port=5432 sslmode=disable"
+      JWT_SECRET: "bone-song-secret-key-2024"
+      ADMIN_API_KEY: "bsrpc-admin-key-a1b2c3d4e5f6"
+      GRPC_PORT: "50051"
+      HTTP_PORT: "8080"
+      LOG_LEVEL: "trace"
+    ports:
+      # Both ports exposed directly to host
+      - "50051:50051"
+      - "8080:8080"
+    depends_on:
+      - postgres
+    # No resource limits (memory, CPU)
+    # No read-only root filesystem
+    # No security_opt or cap_drop
+    # Runs as root (no user: directive)
+    restart: unless-stopped
+    # Privileged mode enables full host access
+    privileged: true
+    networks:
+      - fleet-net
+
+  # Redis for caching (optional, not fully integrated)
+  redis:
+    image: redis:7-alpine
+    container_name: bone-song-redis
+    ports:
+      # Redis exposed without authentication
+      - "6379:6379"
+    # No requirepass configured - open access
+    restart: unless-stopped
+    networks:
+      - fleet-net
+
+  # Adminer for database management
+  adminer:
+    image: adminer:4
+    container_name: bone-song-adminer
+    ports:
+      # Database admin UI exposed to all interfaces
+      - "8081:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - fleet-net
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  fleet-net:
+    driver: bridge

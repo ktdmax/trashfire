@@ -1,0 +1,73 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+      # BUG-0011: Debug port exposed to host network (CWE-200, CVSS 3.7, LOW, Tier 4)
+      - "5678:5678"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - rabbitmq
+      - redis
+    environment:
+      - DEBUG=true
+    # BUG-0012: Container runs privileged, full host access (CWE-250, CVSS 8.4, HIGH, Tier 2)
+    privileged: true
+    networks:
+      - escape-net
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: otis_admin
+      # BUG-0013: Weak database password in compose file (CWE-521, CVSS 5.3, MEDIUM, Tier 3)
+      POSTGRES_PASSWORD: EscapeR00m!2024
+      POSTGRES_DB: escaperoom
+    ports:
+      # BUG-0014: Database port exposed to host, should be internal only (CWE-284, CVSS 6.5, MEDIUM, Tier 3)
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - escape-net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      # BUG-0015: RabbitMQ management UI exposed with default guest/guest creds (CWE-1188, CVSS 6.5, MEDIUM, Tier 3)
+      - "15672:15672"
+    networks:
+      - escape-net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      # BUG-0016: Redis exposed without password (CWE-306, CVSS 7.5, HIGH, Tier 2)
+      - "6379:6379"
+    networks:
+      - escape-net
+
+  celery_worker:
+    build: .
+    command: celery -A src.tasks.tasks worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - rabbitmq
+      - redis
+    environment:
+      - DEBUG=true
+    networks:
+      - escape-net
+
+volumes:
+  pgdata:
+
+networks:
+  escape-net:
+    driver: bridge

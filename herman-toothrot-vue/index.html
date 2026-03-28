@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- BUG-008: Missing Content-Security-Policy meta tag allows inline scripts and external resource loading (CWE-1021, CVSS 4.3, MEDIUM, Tier 2) -->
+  <!-- BUG-009: Missing X-Frame-Options allows clickjacking via iframe embedding (CWE-1021, CVSS 4.3, MEDIUM, Tier 2) -->
+  <title>KanbanFlow - Project Management</title>
+  <!-- BUG-010: Loading external font from CDN without subresource integrity check (CWE-829, CVSS 4.3, MEDIUM, Tier 2) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    #app {
+      min-height: 100vh;
+    }
+    .loading-spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="loading-spinner">
+      <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="18" stroke="#3b82f6" stroke-width="3" fill="none" stroke-dasharray="80 30">
+          <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+    </div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

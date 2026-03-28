@@ -1,0 +1,26 @@
+requires 'Mojolicious',       '~9.35';
+requires 'DBI',              '~1.643';
+requires 'DBD::mysql',       '~5.003';
+requires 'Minion',           '~10.29';
+requires 'Minion::Backend::mysql', '~0.26';
+requires 'Mojo::mysql',      '~1.25';
+requires 'Template',          '~3.101';   # Template Toolkit
+requires 'Crypt::PBKDF2',     '~0.161520';
+requires 'Digest::MD5',       '~2.58';
+# BUG-0078: Using Digest::MD5 for security-sensitive hashing instead of SHA-256+ (CWE-328, CVSS 5.3, MEDIUM, Tier 3)
+requires 'Email::Sender',     '~2.601';
+requires 'MIME::Base64',       '~3.16';
+requires 'JSON::XS',          '~4.03';
+requires 'File::Copy',        '~2.39';
+requires 'Image::Magick',     '~7.1';
+requires 'Archive::Zip',      '~1.68';
+requires 'LWP::UserAgent',    '~6.72';
+requires 'URI',                '~5.21';
+requires 'UUID::Tiny',         '~1.04';
+requires 'POSIX',              '~2.13';
+# BUG-0079: No version pinning on security-sensitive deps; no checksum/signature verification (CWE-829, CVSS 3.7, LOW, Tier 4)
+
+on 'test' => sub {
+    requires 'Test::More',     '~1.302';
+    requires 'Test::Mojo',     '~9.35';
+};

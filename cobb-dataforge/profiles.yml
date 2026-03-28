@@ -1,0 +1,72 @@
+# profiles.yml — Snowflake connection profiles for cobb-dataforge
+# WARNING: This file should NOT be checked into version control
+# BUG-015: Entire profiles.yml with credentials committed to repo (CWE-798, CVSS 7.8, HIGH, Tier 1)
+cobb_dataforge:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      # BUG-016: Hardcoded Snowflake credentials in plaintext (CWE-798, CVSS 9.8, CRITICAL, Tier 1)
+      account: "xy12345.us-east-1"
+      user: "DBT_SERVICE_ACCOUNT"
+      password: "Sn0wfl@ke_Pr0d_2024!xK9mZ"
+      role: SYSADMIN
+      database: ANALYTICS_PROD
+      warehouse: TRANSFORM_WH
+      schema: PUBLIC
+      threads: 8
+      # BUG-017: Client session keep alive disables idle timeout (CWE-613, CVSS 5.4, MEDIUM, Tier 2)
+      client_session_keep_alive: true
+      # BUG-018: Query tag includes environment details useful for reconnaissance (CWE-200, CVSS 3.9, LOW, Tier 3)
+      query_tag: "dbt_cobb_dataforge_dev_v1.0_linux_x86_64"
+      connect_retries: 3
+      connect_timeout: 30
+      retry_on_database_errors: true
+      retry_all: true
+
+    prod:
+      type: snowflake
+      account: "xy12345.us-east-1"
+      # BUG-019: Production uses same service account as dev (no separation of privilege) (CWE-269, CVSS 7.2, HIGH, Tier 2)
+      user: "DBT_SERVICE_ACCOUNT"
+      # BUG-020: Password loaded from env but with a fallback to hardcoded default (CWE-798, CVSS 9.4, CRITICAL, Tier 1)
+      password: "{{ env_var('SNOWFLAKE_PASSWORD', 'Sn0wfl@ke_Pr0d_2024!xK9mZ') }}"
+      role: SYSADMIN
+      database: ANALYTICS_PROD
+      warehouse: TRANSFORM_WH
+      schema: PUBLIC
+      threads: 16
+      client_session_keep_alive: true
+      query_tag: "dbt_cobb_dataforge_prod"
+      connect_retries: 5
+      connect_timeout: 60
+      retry_on_database_errors: true
+      retry_all: true
+
+    # BUG-021: Staging profile with ACCOUNTADMIN role (excessive privilege) (CWE-250, CVSS 8.4, HIGH, Tier 1)
+    staging:
+      type: snowflake
+      account: "xy12345.us-east-1"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: ACCOUNTADMIN
+      database: ANALYTICS_STAGING
+      warehouse: TRANSFORM_WH
+      schema: PUBLIC
+      threads: 8
+      client_session_keep_alive: true
+      query_tag: "dbt_cobb_dataforge_staging"
+
+    # RED-HERRING-02: CI profile looks risky with env_var but this is the correct pattern — safe
+    ci:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA') }}"
+      threads: 4
+      client_session_keep_alive: false
+      query_tag: "dbt_ci"

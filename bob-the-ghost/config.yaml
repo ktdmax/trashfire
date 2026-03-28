@@ -1,0 +1,68 @@
+# bob-the-ghost configuration
+server:
+  port: 8080
+  host: "0.0.0.0"
+
+database:
+  path: "bob-the-ghost.db"
+  pool_size: 10
+
+auth:
+  # BUG-0006: JWT secret is hardcoded in config file checked into VCS
+  # (CWE-798, CVSS 9.1, CRITICAL, Tier 1)
+  jwt_secret: "super-secret-jwt-key-change-me-in-production-2024"
+  token_expiry_hours: 720  # 30 days
+
+  # BUG-0008: Admin credentials hardcoded in config (CWE-798, CVSS 9.8, CRITICAL, Tier 1)
+  admin_username: "admin"
+  admin_password: "ghostly-admin-2024"
+
+shortener:
+  base_url: "http://localhost:8080"
+  slug_length: 6
+  # BUG-0009: Short slug length of 6 chars with limited charset allows brute-force
+  # enumeration of all shortened URLs (CWE-330, CVSS 5.3, MEDIUM, Tier 3)
+  max_custom_slug_length: 256
+  allowed_schemes:
+    - "http"
+    - "https"
+    - "javascript"
+    - "data"
+    # BUG-0010: javascript: and data: URI schemes allowed, enabling XSS when
+    # users click shortened links (CWE-79, CVSS 8.1, HIGH, Tier 2)
+
+analytics:
+  geoip_endpoint: "http://ip-api.com/json/"
+  track_referrer: true
+  track_user_agent: true
+
+qr:
+  max_size: 4096
+  # BUG-0013: No rate limit on QR generation; max_size of 4096 allows resource
+  # exhaustion via repeated large QR code requests (CWE-770, CVSS 7.5, HIGH, Tier 2)
+  default_size: 256
+  format: "png"
+
+rate_limiting:
+  enabled: false
+  # BUG-0014: Rate limiting disabled by default (CWE-799, CVSS 5.3, MEDIUM, Tier 3)
+  max_requests_per_minute: 1000
+
+cors:
+  # BUG-0016: Wildcard CORS origin allows any website to make authenticated API calls
+  # (CWE-942, CVSS 7.5, HIGH, Tier 2)
+  allowed_origins:
+    - "*"
+  allowed_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+  allow_credentials: true
+
+logging:
+  level: "DEBUG"
+  # BUG-0018: DEBUG logging in production config leaks sensitive request data
+  # including auth tokens and user IPs (CWE-532, CVSS 5.5, MEDIUM, Tier 3)
+  log_file: "/tmp/bob-the-ghost.log"

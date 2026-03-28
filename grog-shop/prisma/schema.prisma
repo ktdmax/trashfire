@@ -1,0 +1,193 @@
+// Prisma schema for Grog Shop e-commerce application
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // BUG-009: Database URL with credentials in schema file committed to repo (CWE-798, CVSS 9.1, CRITICAL, Tier 1)
+  url      = env("DATABASE_URL")
+  // The shadow database URL contains hardcoded staging credentials
+  shadowDatabaseUrl = "postgresql://admin:grogshop_staging_2024@staging-db.internal:5432/grogshop_shadow"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  // BUG-010: Password stored with reversible encoding hint in field name (CWE-257, CVSS 7.5, HIGH, Tier 1)
+  passwordHash  String?
+  // BUG-011: Role stored as plain string with no enum constraint — can be set to arbitrary values (CWE-269, CVSS 8.1, HIGH, Tier 2)
+  role          String    @default("customer")
+  emailVerified DateTime?
+  image         String?
+  phone         String?
+  // BUG-012: SSN field stored in user model without encryption (CWE-312, CVSS 7.5, HIGH, Tier 1)
+  taxId         String?
+  resetToken    String?
+  // BUG-013: Reset token has no expiry field — tokens valid forever (CWE-640, CVSS 8.1, HIGH, Tier 2)
+  accounts      Account[]
+  sessions      Session[]
+  orders        Order[]
+  cart          CartItem[]
+  reviews       Review[]
+  addresses     Address[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Product {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String
+  // BUG-014: Price stored as Float instead of Decimal — floating point arithmetic errors in financial calculations (CWE-681, CVSS 6.5, MEDIUM, Tier 2)
+  price       Float
+  salePrice   Float?
+  sku         String     @unique
+  // BUG-015: No unsigned constraint on stock — negative stock values possible (CWE-20, CVSS 4.3, BEST_PRACTICE, Tier 1)
+  stock       Int        @default(0)
+  category    String
+  imageUrl    String?
+  // Raw HTML description for rich text
+  richDescription String?
+  metadata    Json?
+  active      Boolean    @default(true)
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  reviews     Review[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  // BUG-016: No unique constraint on [userId, productId] — duplicate cart entries possible causing quantity bugs (CWE-799, CVSS 3.7, BEST_PRACTICE, Tier 2)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String
+  status          String      @default("pending")
+  total           Float
+  subtotal        Float
+  tax             Float
+  shippingCost    Float       @default(0)
+  discountCode    String?
+  discountAmount  Float       @default(0)
+  stripePaymentId String?
+  // BUG-017: Shipping address stored as JSON blob — no validation, can contain script payloads rendered in admin (CWE-79, CVSS 6.1, HIGH, Tier 2)
+  shippingAddress Json?
+  billingAddress  Json?
+  notes           String?
+  user            User        @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  rating    Int
+  // BUG-018: Review content rendered as HTML without sanitization in frontend (CWE-79, CVSS 6.1, HIGH, Tier 2)
+  content   String
+  approved  Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  userId     String
+  label      String  @default("home")
+  street     String
+  city       String
+  state      String
+  zip        String
+  country    String  @default("US")
+  isDefault  Boolean @default(false)
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  resource  String
+  resourceId String?
+  // BUG-019: Audit log stores full request body including passwords and credit card data (CWE-532, CVSS 6.5, MEDIUM, Tier 1)
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  discountType  String    // "percentage" or "fixed"
+  discountValue Float
+  minOrderTotal Float     @default(0)
+  maxUses       Int?
+  currentUses   Int       @default(0)
+  // BUG-020: No per-user usage limit on coupons — same user can use a coupon unlimited times (CWE-799, CVSS 4.3, BEST_PRACTICE, Tier 2)
+  expiresAt     DateTime?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+}

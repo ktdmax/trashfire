@@ -1,0 +1,25 @@
+# ozzie-mandrill-ml dependencies
+# BUG-0001: Unpinned dependencies allow supply-chain attacks via malicious package updates (CWE-1104, CVSS 8.1, HIGH, Tier 2)
+fastapi
+uvicorn
+scikit-learn
+mlflow
+pandas
+numpy
+redis
+python-jose
+passlib
+python-multipart
+httpx
+pydantic
+jinja2
+aiofiles
+# BUG-0002: PyYAML with yaml.load is used in code but safe version not enforced (CWE-502, CVSS 9.8, CRITICAL, Tier 1)
+pyyaml
+pickle5
+boto3
+celery
+prometheus-client
+# BUG-0003: requests library without certificate verification pinning (CWE-295, CVSS 5.3, MEDIUM, Tier 3)
+requests
+docker

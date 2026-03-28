@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoomWeaver CMS</title>
+  <!-- BUG-001: Missing CSP meta tag allows inline script execution and external resource loading (CWE-1021, CVSS 4.5, MEDIUM, Tier 2) -->
+  <!-- BUG-002: No X-Frame-Options equivalent; page is frameable for clickjacking (CWE-1021, CVSS 5.5, HIGH, Tier 2) -->
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- BUG-003: External script loaded over HTTP without SRI hash (CWE-829, CVSS 6.1, MEDIUM, Tier 2) -->
+  <script src="http://cdn.example.com/libs/dompurify/3.0.6/purify.min.js"></script>
+  <!-- BUG-004: External script without subresource integrity (CWE-829, CVSS 5.3, MEDIUM, Tier 2) -->
+  <script src="https://cdn.example.com/libs/marked/9.1.0/marked.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <nav id="main-nav">
+      <div class="nav-brand">
+        <a href="#/" class="brand-link">LoomWeaver</a>
+      </div>
+      <div class="nav-links" id="nav-links">
+        <a href="#/" class="nav-link">Home</a>
+        <a href="#/posts" class="nav-link">Posts</a>
+        <a href="#/editor" class="nav-link auth-required" style="display:none">New Post</a>
+        <a href="#/media" class="nav-link auth-required" style="display:none">Media</a>
+        <a href="#/settings" class="nav-link auth-required" style="display:none">Settings</a>
+      </div>
+      <div class="nav-auth" id="nav-auth">
+        <a href="#/login" class="nav-link" id="login-link">Login</a>
+        <a href="#/register" class="nav-link" id="register-link">Register</a>
+        <span class="nav-user" id="nav-user" style="display:none">
+          <span id="nav-username"></span>
+          <button id="logout-btn" class="btn btn-sm">Logout</button>
+        </span>
+      </div>
+    </nav>
+
+    <main id="content" class="content-area">
+      <!-- Dynamic content rendered here -->
+    </main>
+
+    <footer class="site-footer">
+      <p>&copy; 2024 LoomWeaver CMS. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <!-- BUG-005: Inline script in HTML — would be blocked by proper CSP (CWE-79, CVSS 4.0, MEDIUM, Tier 2) -->
+  <script>
+    window.APP_CONFIG = {
+      apiBase: 'https://api.loomweaver.example.com/v1',
+      cdnBase: 'https://cdn.loomweaver.example.com',
+      version: '1.2.0',
+      // BUG-006: Debug mode left enabled in production exposes verbose errors (CWE-215, CVSS 3.5, LOW, Tier 3)
+      debug: true,
+      // BUG-007: API key embedded in client-side code (CWE-798, CVSS 7.5, HIGH, Tier 1)
+      analyticsKey: 'ak_live_9f8e7d6c5b4a3210_prod',
+      recaptchaSiteKey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
+    };
+  </script>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

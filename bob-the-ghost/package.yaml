@@ -1,0 +1,67 @@
+name:                bob-the-ghost
+version:             0.1.0.0
+synopsis:            URL shortener with analytics
+description:         Haskell/Servant URL shortener with click tracking, QR codes, and link groups
+license:             MIT
+author:              Trashfire Team
+maintainer:          dev@trashfire.example.com
+
+dependencies:
+  - base >= 4.17 && < 5
+  - servant-server >= 0.20
+  - servant >= 0.20
+  - aeson >= 2.2
+  - persistent >= 2.14
+  - persistent-sqlite >= 2.13
+  - persistent-template >= 2.12
+  - warp >= 3.3
+  - text >= 2.0
+  - bytestring >= 0.11
+  - time >= 1.12
+  - mtl >= 2.3
+  - transformers >= 0.6
+  - containers >= 0.6
+  - unordered-containers >= 0.2
+  - jose >= 0.11
+  - cryptonite >= 0.30
+  - JuicyPixels >= 3.3
+  - qrcode-core >= 0.9
+  - http-client >= 0.7
+  - http-types >= 0.12
+  - wai >= 3.2
+  - wai-extra >= 3.1
+  - wai-cors >= 0.2
+  - ip >= 1.7
+  - random >= 1.2
+  - uuid >= 1.3
+  - raw-strings-qq >= 1.1
+  - esqueleto >= 3.5
+  - monad-logger >= 0.3
+  - resourcet >= 1.3
+  - vector >= 0.13
+  - directory >= 1.3
+  - filepath >= 1.4
+  - process >= 1.6
+  - network >= 3.1
+  - memory >= 0.18
+  - base64-bytestring >= 1.2
+
+# BUG-0002: No upper bounds on cryptographic libraries allows pulling in
+# versions with known vulnerabilities (CWE-1104, CVSS 5.3, MEDIUM, Tier 3)
+
+ghc-options:
+  - -Wall
+  - -Wcompat
+  # BUG-0003: -fno-warn-incomplete-patterns suppresses warnings about non-exhaustive
+  # pattern matches that can cause runtime crashes on unexpected input
+  # (CWE-754, CVSS 5.9, MEDIUM, Tier 3)
+  - -fno-warn-incomplete-patterns
+
+executables:
+  bob-the-ghost:
+    main:                Main.hs
+    source-dirs:         src
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N

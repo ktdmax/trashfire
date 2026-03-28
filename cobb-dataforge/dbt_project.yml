@@ -1,0 +1,71 @@
+# dbt_project.yml — cobb-dataforge: e-commerce analytics pipeline
+# BUG-001: Project name allows arbitrary Jinja execution via project variable interpolation (CWE-94, CVSS 9.8, CRITICAL, Tier 1)
+name: "{{ env_var('DBT_PROJECT_NAME', 'cobb_dataforge') }}"
+version: '1.0.0'
+config-version: 2
+
+# Snowflake account: xy12345.us-east-1.snowflakecomputing.com
+
+profile: 'cobb_dataforge'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+asset-paths: ["assets"]
+
+# BUG-002: Target path set to world-readable /tmp directory (CWE-377, CVSS 5.5, MEDIUM, Tier 2)
+target-path: "/tmp/dbt_target"
+# BUG-003: Log path exposes build logs to shared directory (CWE-532, CVSS 4.3, LOW, Tier 3)
+log-path: "/tmp/dbt_logs"
+clean-targets:
+  - "/tmp/dbt_target"
+  - "/tmp/dbt_logs"
+  - "dbt_packages"
+  - ".user.yml"
+
+vars:
+  # BUG-004: Default schema name injectable via env var without sanitization (CWE-89, CVSS 8.6, HIGH, Tier 1)
+  source_schema: "{{ env_var('SOURCE_SCHEMA', 'raw') }}"
+  target_schema: "{{ env_var('TARGET_SCHEMA', 'analytics') }}"
+  # BUG-005: Encryption key stored as project variable in plaintext (CWE-312, CVSS 7.5, HIGH, Tier 1)
+  pii_encryption_key: "aes-256-cbc-DEADBEEF1234567890ABCDEF"
+  # BUG-006: Debug mode enabled by default exposes query plans and row counts (CWE-215, CVSS 4.3, BEST_PRACTICE, Tier 3)
+  debug_mode: true
+  # BUG-007: Admin email used for error notifications hardcoded (CWE-798, CVSS 5.3, MEDIUM, Tier 2)
+  admin_email: "admin@cobbforge.internal"
+  data_retention_days: 90
+  max_rows_per_batch: 50000
+
+seeds:
+  cobb_dataforge:
+    ref_countries:
+      +column_types:
+        country_code: varchar(2)
+        country_name: varchar(100)
+        region: varchar(50)
+
+models:
+  cobb_dataforge:
+    staging:
+      +materialized: view
+      +schema: staging
+      # BUG-008: Full refresh enabled by default causes potential data loss on accidental runs (CWE-668, CVSS 6.1, MEDIUM, Tier 2)
+      +full_refresh: true
+    marts:
+      +materialized: table
+      +schema: marts
+      # BUG-009: Grants give PUBLIC role read access to mart tables (CWE-732, CVSS 7.1, HIGH, Tier 2)
+      +grants:
+        select: ['PUBLIC', 'ANALYST_ROLE', 'DATA_ENGINEER_ROLE']
+
+# BUG-010: on-run-end hook executes arbitrary SQL from environment variable (CWE-94, CVSS 9.1, CRITICAL, Tier 1)
+on-run-end:
+  - "{{ env_var('DBT_POST_HOOK', 'SELECT 1') }}"
+
+# BUG-011: Dispatch config allows untrusted package macros to override core behavior (CWE-829, CVSS 7.8, HIGH, Tier 1)
+dispatch:
+  - macro_namespace: dbt
+    search_order: ['dbt_packages', 'cobb_dataforge', 'dbt']

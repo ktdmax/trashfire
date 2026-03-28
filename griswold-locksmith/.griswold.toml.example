@@ -1,0 +1,63 @@
+# Griswold Locksmith Configuration
+# Copy to ~/.griswold.toml and customize
+
+[vault]
+# Path to the encrypted vault database
+db_path = "~/.griswold/vault.db"
+# Backup directory
+backup_dir = "~/.griswold/backups"
+# Auto-lock timeout in seconds (0 = never)
+auto_lock_timeout = 300
+# Maximum failed login attempts before lockout
+max_attempts = 5
+
+[crypto]
+# Key derivation function: "argon2" or "pbkdf2"
+kdf = "pbkdf2"
+# PBKDF2 iterations (recommended: 600000+)
+pbkdf2_iterations = 100000
+# Salt length in bytes
+salt_length = 16
+# Encryption algorithm: "aes-256-gcm" or "chacha20-poly1305"
+algorithm = "aes-256-gcm"
+
+[sync]
+# Remote sync server URL
+server_url = "https://sync.griswold-locksmith.example.com"
+# API key for authentication
+api_key = ""
+# Sync interval in seconds
+interval = 600
+# Verify TLS certificates
+verify_ssl = true
+# Request timeout in seconds
+timeout = 30
+
+[sharing]
+# Directory for exported public keys
+keyring_dir = "~/.griswold/keyring"
+# Default key size for RSA keypairs
+rsa_key_size = 2048
+
+[export]
+# Default export format: "json", "csv", or "encrypted"
+default_format = "json"
+# Include metadata in exports
+include_metadata = true
+
+[passwords]
+# Default generated password length
+default_length = 16
+# Character sets to include
+use_uppercase = true
+use_lowercase = true
+use_digits = true
+use_symbols = true
+# Exclude ambiguous characters (0/O, l/1, etc.)
+exclude_ambiguous = false
+
+[logging]
+# Log level: "debug", "info", "warning", "error"
+level = "info"
+# Log file path (empty = no file logging)
+log_file = ""

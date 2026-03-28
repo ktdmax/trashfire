@@ -1,0 +1,138 @@
+version: '3.8'
+
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment:
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow_admin:SuperSecret123!@postgres:5432/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+    AIRFLOW__CELERY__RESULT_BACKEND: redis://redis:6379/1
+    AIRFLOW__CORE__FERNET_KEY: ZmDfcTF7_60GrrY167zsiPd67pEvs0aGOv2oasOM1Pg=
+    # BUG-0017: Webserver secret key is static and predictable (CWE-330, CVSS 6.0, MEDIUM, Tier 3)
+    AIRFLOW__WEBSERVER__SECRET_KEY: woodtick-secret-2024
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
+    # BUG-0018: API auth backend set to deny_all but actually allows all (CWE-863, CVSS 8.0, HIGH, Tier 2)
+    AIRFLOW__API__AUTH_BACKENDS: airflow.api.auth.backend.basic_auth
+    AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+    AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    MINIO_ROOT_USER: minio_admin
+    MINIO_ROOT_PASSWORD: minio_secret_key_2024
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./plugins:/opt/airflow/plugins
+    - ./config:/opt/airflow/config
+    - ./scripts:/opt/airflow/scripts
+    # BUG-0019: Docker socket mounted into container allows container escape (CWE-269, CVSS 9.0, CRITICAL, Tier 1)
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /tmp:/tmp/host_shared
+  # BUG-0021: Privileged mode gives full host access (CWE-250, CVSS 9.5, CRITICAL, Tier 1)
+  privileged: true
+  networks:
+    - woodtick-net
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: airflow_admin
+      POSTGRES_PASSWORD: SuperSecret123!
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - woodtick-net
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow_admin"]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    networks:
+      - woodtick-net
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio_admin
+      MINIO_ROOT_PASSWORD: minio_secret_key_2024
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - woodtick-net
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  airflow-worker:
+    <<: *airflow-common
+    command: celery worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@woodtick.local
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # BUG-0024: Flower (Celery monitoring) exposed without auth (CWE-306, CVSS 5.0, MEDIUM, Tier 3)
+  flower:
+    <<: *airflow-common
+    command: celery flower
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_started
+
+volumes:
+  postgres-data:
+  minio-data:
+
+networks:
+  woodtick-net:
+    driver: bridge

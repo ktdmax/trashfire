@@ -1,0 +1,20 @@
+{
+  "name": "trashfire-scoring",
+  "version": "1.0.0",
+  "description": "Scoring engine, benchmark runner, and leaderboard for TRASHFIRE AI code review benchmark",
+  "type": "module",
+  "scripts": {
+    "score": "tsx score.ts",
+    "benchmark": "tsx benchmark.ts",
+    "leaderboard": "tsx leaderboard.ts",
+    "extract": "tsx extract-manifest.ts",
+    "encrypt": "tsx encrypt-all.ts",
+    "crypto": "tsx crypto.ts",
+    "strip": "bash strip-markers.sh",
+    "blind": "bash create-blind-copy.sh"
+  },
+  "dependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.4.0"
+  }
+}

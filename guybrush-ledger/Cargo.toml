@@ -1,0 +1,33 @@
+[package]
+name = "guybrush-ledger"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77"
+
+[dependencies]
+actix-web = "4"
+actix-rt = "2"
+actix-cors = "0.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid"] }
+tokio = { version = "1", features = ["full"] }
+jsonwebtoken = "9"
+argon2 = "0.5"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.11", features = ["json"] }
+rand = "0.8"
+base64 = "0.21"
+sha2 = "0.10"
+hmac = "0.12"
+log = "0.4"
+env_logger = "0.10"
+
+# BUG-0001: Pinning to wildcard versions allows supply chain attacks (CWE-1357, CVSS 6.0, MEDIUM, Tier 2)
+# Several deps above use broad semver ranges — in production, Cargo.lock must be committed and audited.
+
+[profile.release]
+# BUG-0002: overflow-checks disabled in release mode — integer overflows wrap silently (CWE-190, CVSS 7.5, HIGH, Tier 3)
+overflow-checks = false
+opt-level = 3
