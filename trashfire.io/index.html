@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TRASHFIRE — AI Code Review Benchmark</title>
+  <meta name="description" content="How well can AI find bugs? 42 vulnerable apps, 4200+ planted issues, 30+ languages. The benchmark your LLM doesn't want to see.">
+  <meta property="og:title" content="TRASHFIRE — AI Code Review Benchmark">
+  <meta property="og:description" content="42 vulnerable apps. 4200+ planted issues. 30+ languages. How well can AI actually review code?">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://trashfire.io">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TRASHFIRE — AI Code Review Benchmark">
+  <meta name="twitter:description" content="42 vulnerable apps. 4200+ planted issues. 30+ languages. How well can AI actually review code?">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+  <style>
+    :root {
+      --bg: #09090b; --surface: #18181b; --surface2: #27272a;
+      --border: #3f3f46; --text: #fafafa; --muted: #a1a1aa;
+      --accent: #f97316; --accent2: #fb923c;
+      --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+    /* ── Hero ���─ */
+    .hero {
+      min-height: 90vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 2rem; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(249,115,22,0.12) 0%, transparent 60%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+      padding: 0.4rem 1rem; font-size: 0.85rem; color: var(--muted); margin-bottom: 2rem;
+      position: relative;
+    }
+    .hero-badge .dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; }
+    h1 { font-size: clamp(3rem, 8vw, 6rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; position: relative; }
+    h1 .fire { color: var(--accent); }
+    .tagline { font-size: clamp(1.1rem, 2.5vw, 1.5rem); color: var(--muted); max-width: 600px; margin: 1.5rem auto 2.5rem; position: relative; }
+    .hero-stats {
+      display: flex; gap: 1px; background: var(--border); border-radius: 16px; overflow: hidden;
+      position: relative; margin-bottom: 2.5rem;
+    }
+    .hero-stat {
+      background: var(--surface); padding: 1.25rem 2rem; text-align: center; min-width: 140px;
+    }
+    .hero-stat-value { font-size: 1.75rem; font-weight: 700; color: var(--accent); }
+    .hero-stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.15rem; }
+    .hero-actions { display: flex; gap: 1rem; position: relative; flex-wrap: wrap; justify-content: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1.75rem; border-radius: 10px; font-size: 1rem; font-weight: 600;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--muted); transform: translateY(-1px); }
+
+    /* ── Section ── */
+    section { max-width: 1100px; margin: 0 auto; padding: 5rem 2rem; }
+    h2 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .section-sub { color: var(--muted); margin-bottom: 2.5rem; font-size: 1.1rem; }
+
+    /* ── How it works ── */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+    .step {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 2rem; position: relative;
+    }
+    .step-num {
+      font-size: 0.75rem; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem;
+    }
+    .step h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .step p { color: var(--muted); font-size: 0.9rem; }
+
+    /* ── Leaderboard ── */
+    #leaderboard { background: var(--surface); border-radius: 20px; border: 1px solid var(--border); padding: 2.5rem; margin-top: 1rem; }
+    .lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .lb-header h2 { margin-bottom: 0; }
+    .lb-updated { color: var(--muted); font-size: 0.85rem; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; font-weight: 600;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+    }
+    thead th:nth-child(5), thead th:nth-child(6), thead th:nth-child(7), thead th:nth-child(8) { text-align: right; }
+    tbody td {
+      padding: 1rem; border-bottom: 1px solid rgba(63,63,70,0.5); vertical-align: middle;
+    }
+    tbody td:nth-child(5), tbody td:nth-child(6), tbody td:nth-child(7), tbody td:nth-child(8) { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr:hover { background: rgba(249,115,22,0.04); }
+    .rank { font-size: 1.2rem; width: 50px; text-align: center; }
+    .model-name { font-weight: 600; }
+    .model-provider { font-size: 0.8rem; color: var(--muted); }
+    .score { font-weight: 700; color: var(--green); font-size: 1.05rem; }
+    .preset-tag {
+      display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem;
+      background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+    }
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+    .empty-state p { margin-bottom: 1rem; }
+
+    /* ── Categories ── */
+    .cats { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+    .cat {
+      display: flex; align-items: center; gap: 1rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem;
+    }
+    .cat-weight { font-size: 1.5rem; font-weight: 800; color: var(--accent); min-width: 55px; text-align: right; }
+    .cat-name { font-weight: 600; font-size: 0.95rem; }
+    .cat-desc { color: var(--muted); font-size: 0.82rem; }
+
+    /* ── Projects ── */
+    .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.75rem; }
+    .project-chip {
+      display: flex; align-items: center; gap: 0.75rem;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem;
+      font-size: 0.85rem; transition: border-color 0.2s;
+    }
+    .project-chip:hover { border-color: var(--accent); }
+    .project-chip .name { font-weight: 600; }
+    .project-chip .stack { color: var(--muted); font-size: 0.78rem; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; padding: 3rem 2rem; color: var(--muted); font-size: 0.85rem;
+      border-top: 1px solid var(--border); margin-top: 2rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    .disclaimer {
+      max-width: 700px; margin: 0 auto 1.5rem; padding: 1rem 1.5rem;
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 10px;
+      font-size: 0.82rem; color: var(--muted); text-align: left;
+    }
+    .disclaimer strong { color: var(--red); }
+
+    @media (max-width: 640px) {
+      .hero-stats { flex-direction: column; }
+      .hero-stat { min-width: auto; }
+      section { padding: 3rem 1.25rem; }
+      #leaderboard { padding: 1.25rem; }
+      table { font-size: 0.82rem; }
+      thead th, tbody td { padding: 0.6rem 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge"><span class="dot"></span> Open-source benchmark</div>
+    <h1><span class="fire">TRASH</span>FIRE</h1>
+    <p class="tagline">The AI code review benchmark your LLM doesn't want to see.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-value">42</div><div class="hero-stat-label">Projects</div></div>
+      <div class="hero-stat"><div class="hero-stat-value">4,200+</div><div class="hero-stat-label">Planted Issues</div></div>
+      <div class="hero-stat"><div class="hero-stat-value">30+</div><div class="hero-stat-label">Languages</div></div>
+      <div class="hero-stat"><div class="hero-stat-value" id="run-count">—</div><div class="hero-stat-label">Benchmark Runs</div></div>
+    </div>
+    <div class="hero-actions">
+      <a href="https://github.com/ktdmax/trashfire" class="btn btn-primary" target="_blank">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+      <a href="#leaderboard" class="btn btn-secondary">View Results</a>
+    </div>
+  </div>
+
+  <!-- How it works -->
+  <section>
+    <h2>How it works</h2>
+    <p class="section-sub">Give an AI the code. See what it finds. Score it against encrypted ground truth.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">Step 1</div>
+        <h3>Pick a project</h3>
+        <p>42 realistic mini-apps — from Next.js e-commerce to Rust service meshes to Solidity smart contracts.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 2</div>
+        <h3>Run your reviewer</h3>
+        <p>Any AI model, any prompt, any skills. The blind testing copy has all bug markers stripped.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 3</div>
+        <h3>Score it</h3>
+        <p>The scoring engine decrypts ground truth and computes precision, recall, and composite score.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 4</div>
+        <h3>Compare</h3>
+        <p>See how different models, prompts, and skills stack up on the leaderboard.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section>
+    <h2>What we test</h2>
+    <p class="section-sub">Not just security. Six dimensions of code review ability, weighted by importance.</p>
+    <div class="cats">
+      <div class="cat"><div class="cat-weight">35%</div><div><div class="cat-name">Security</div><div class="cat-desc">OWASP Top 10, CWE-mapped vulnerabilities</div></div></div>
+      <div class="cat"><div class="cat-weight">25%</div><div><div class="cat-name">Tricky</div><div class="cat-desc">Cross-module bugs, edge cases, timing attacks</div></div></div>
+      <div class="cat"><div class="cat-weight">20%</div><div><div class="cat-name">Logic</div><div class="cat-desc">Off-by-one, race conditions, async issues</div></div></div>
+      <div class="cat"><div class="cat-weight">10%</div><div><div class="cat-name">Performance</div><div class="cat-desc">N+1 queries, memory leaks, blocking I/O</div></div></div>
+      <div class="cat"><div class="cat-weight">5%</div><div><div class="cat-name">Best Practices</div><div class="cat-desc">Hardcoded values, swallowed errors, deprecated APIs</div></div></div>
+      <div class="cat"><div class="cat-weight">5%</div><div><div class="cat-name">Code Smells</div><div class="cat-desc">Dead code, duplication, god functions</div></div></div>
+    </div>
+  </section>
+
+  <!-- Leaderboard -->
+  <section>
+    <div id="leaderboard">
+      <div class="lb-header">
+        <div>
+          <h2>Leaderboard</h2>
+          <span class="lb-updated" id="lb-date"></span>
+        </div>
+      </div>
+      <div id="lb-table"></div>
+    </div>
+  </section>
+
+  <!-- Projects -->
+  <section>
+    <h2>42 Projects</h2>
+    <p class="section-sub">Every project is a realistic app with ~100 planted issues across all categories.</p>
+    <div class="project-grid" id="project-list"></div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> This entire benchmark — all 42 projects, ~100,000 lines of code, the scoring engine, and this website — was generated by AI (Claude by Anthropic). The code is <strong>intentionally vulnerable</strong>. Do not use any of it in production. It exists solely for benchmarking AI code review capabilities.
+    </div>
+    <p>
+      <a href="https://github.com/ktdmax/trashfire">GitHub</a> &middot;
+      MIT License &middot;
+      Made with 🔥 by AI
+    </p>
+  </footer>
+
+  <script>
+    // ── Leaderboard Data ──
+    // Embedded from results — update this when new runs are added
+    const RESULTS = [
+  {
+    "run_id": "dev-savvy-claude-opus-mn9xm57i",
+    "timestamp": "2026-03-28T06:11:01.216Z",
+    "model": "claude-opus-4-6",
+    "model_display": "Claude Opus 4.6",
+    "provider": "anthropic",
+    "preset": "dev-savvy",
+    "skills": [],
+    "skill_source": "none",
+    "projects_tested": 1,
+    "composite_score": 0.4521555528572386,
+    "recall": 0,
+    "precision": 0,
+    "found": 62,
+    "total": 100,
+    "false_positives": 27,
+    "duration_ms": 0,
+    "tags": []
+  },
+  {
+    "run_id": "vanilla-claude-opus-mn9xm3pu",
+    "timestamp": "2026-03-28T06:10:59.286Z",
+    "model": "claude-opus-4-6",
+    "model_display": "Claude Opus 4.6",
+    "provider": "anthropic",
+    "preset": "vanilla",
+    "skills": [],
+    "skill_source": "none",
+    "projects_tested": 1,
+    "composite_score": 0.4107569325811542,
+    "recall": 0,
+    "precision": 0,
+    "found": 57,
+    "total": 100,
+    "false_positives": 18,
+    "duration_ms": 0,
+    "tags": []
+  },
+  {
+    "run_id": "expert-claude-opus-mn9xlvv8",
+    "timestamp": "2026-03-28T06:10:49.182Z",
+    "model": "claude-opus-4-6",
+    "model_display": "Claude Opus 4.6",
+    "provider": "anthropic",
+    "preset": "expert",
+    "skills": [],
+    "skill_source": "none",
+    "projects_tested": 1,
+    "composite_score": 0.3771954053709535,
+    "recall": 0,
+    "precision": 0,
+    "found": 57,
+    "total": 100,
+    "false_positives": 17,
+    "duration_ms": 0,
+    "tags": []
+  }
+];
+
+    const PROJECTS = [
+      { name: "grog-shop", stack: "Next.js + Prisma" },
+      { name: "tentacle-labs", stack: "Flask + SQLAlchemy" },
+      { name: "scumm-bar", stack: "Express + MongoDB" },
+      { name: "manny-travel", stack: "React + Postgres" },
+      { name: "sam-max-cases", stack: "Django + DRF" },
+      { name: "full-throttle", stack: "Go + Docker + K8s" },
+      { name: "loom-weaver", stack: "Vanilla JS" },
+      { name: "zak-mckracken", stack: "PHP + Python + JS" },
+      { name: "monkey-wrench", stack: "Ruby on Rails" },
+      { name: "day-of-the-tentacle", stack: "Elixir + Phoenix" },
+      { name: "indy-fortune", stack: "Spring Boot + Java" },
+      { name: "wally-b-feed", stack: "Kotlin + WebFlux" },
+      { name: "guybrush-ledger", stack: "Rust + Actix-web" },
+      { name: "elaine-marley-mesh", stack: "Rust + Axum" },
+      { name: "lechuck-crypt", stack: "C + OpenSSL" },
+      { name: "murrayd-signal", stack: "C++ + Boost.Asio" },
+      { name: "purcell-vault", stack: "C# + .NET 8" },
+      { name: "voodoo-queen", stack: "Swift + Vapor" },
+      { name: "stan-salesman", stack: "Kotlin + Ktor" },
+      { name: "fate-of-atlantis", stack: "Scala + Play" },
+      { name: "melee-island-analytics", stack: "R + Shiny" },
+      { name: "woodtick-pipeline", stack: "Python + Airflow" },
+      { name: "brink-deployer", stack: "Terraform + CDK" },
+      { name: "dig-site-graphql", stack: "Apollo + GraphQL" },
+      { name: "bone-song-rpc", stack: "Go + gRPC" },
+      { name: "phatt-island-chat", stack: "Socket.IO + Redis" },
+      { name: "largo-lagrande-lambda", stack: "AWS Lambda + SAM" },
+      { name: "governor-phatt-mobile", stack: "React Native" },
+      { name: "herman-toothrot-vue", stack: "Vue 3 + Supabase" },
+      { name: "carla-svelte", stack: "SvelteKit + Drizzle" },
+      { name: "ozzie-mandrill-ml", stack: "FastAPI + MLflow" },
+      { name: "wally-feeds-flutter", stack: "Flutter + Firebase" },
+      { name: "spiffy-anchor", stack: "Solidity + Hardhat" },
+      { name: "captain-dread-pipe", stack: "Julia + Genie.jl" },
+      { name: "stan-glass-store", stack: "Laravel + Livewire" },
+      { name: "jojo-the-monkey", stack: "Deno + Fresh" },
+      { name: "griswold-locksmith", stack: "Python + Typer CLI" },
+      { name: "bob-the-ghost", stack: "Haskell + Servant" },
+      { name: "porcelain-pirates", stack: "Perl + Mojolicious" },
+      { name: "pegbiter-monitor", stack: "Zig + C interop" },
+      { name: "otis-escape-room", stack: "Litestar + Stripe" },
+      { name: "cobb-dataforge", stack: "dbt + Snowflake" },
+    ];
+
+    // ── Render ──
+    function pct(n) { return (n * 100).toFixed(1) + "%"; }
+    function medal(i) { return ["🥇","🥈","🥉"][i] || `#${i+1}`; }
+
+    function renderLeaderboard() {
+      document.getElementById("run-count").textContent = RESULTS.length;
+
+      if (RESULTS.length === 0) {
+        document.getElementById("lb-table").innerHTML = `
+          <div class="empty-state">
+            <p>No benchmark results yet.</p>
+            <a href="https://github.com/ktdmax/trashfire#quick-start" class="btn btn-primary" target="_blank">Run your first benchmark</a>
+          </div>`;
+        return;
+      }
+
+      document.getElementById("lb-date").textContent =
+        "Updated " + new Date(RESULTS[0].timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+      let html = `<table><thead><tr>
+        <th>Rank</th><th>Model</th><th>Strategy</th><th>Skills</th>
+        <th>Score</th><th>Recall</th><th>Precision</th><th>FP</th>
+      </tr></thead><tbody>`;
+
+      RESULTS.forEach((r, i) => {
+        const skills = r.skills.length > 0
+          ? (r.skill_source === "supaskills" ? `SupaSkills` : r.skills.join(", "))
+          : "—";
+        html += `<tr>
+          <td class="rank">${medal(i)}</td>
+          <td><div class="model-name">${r.model_display}</div><div class="model-provider">${r.provider}</div></td>
+          <td><span class="preset-tag">${r.preset}</span></td>
+          <td>${skills}</td>
+          <td class="score">${pct(r.composite_score)}</td>
+          <td>${pct(r.recall || 0)}</td>
+          <td>${pct(r.precision || 0)}</td>
+          <td>${r.false_positives}</td>
+        </tr>`;
+      });
+
+      html += "</tbody></table>";
+      document.getElementById("lb-table").innerHTML = html;
+    }
+
+    function renderProjects() {
+      const grid = document.getElementById("project-list");
+      grid.innerHTML = PROJECTS.map(p => `
+        <div class="project-chip">
+          <div><div class="name">${p.name}</div><div class="stack">${p.stack}</div></div>
+        </div>`).join("");
+    }
+
+    renderLeaderboard();
+    renderProjects();
+  </script>
+</body>
+</html>
