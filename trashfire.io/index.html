@@ -68,18 +68,7 @@
     h2 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; }
     .section-sub { color: var(--muted); margin-bottom: 2.5rem; font-size: 1.1rem; }
 
-    /* ── How it works ── */
-    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
-    .step {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-      padding: 2rem; position: relative;
-    }
-    .step-num {
-      font-size: 0.75rem; font-weight: 700; color: var(--accent);
-      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem;
-    }
-    .step h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
-    .step p { color: var(--muted); font-size: 0.9rem; }
+    /* ── (steps removed, replaced by terminal) ── */
 
     /* ── Leaderboard ── */
     #leaderboard { background: var(--surface); border-radius: 20px; border: 1px solid var(--border); padding: 2.5rem; margin-top: 1rem; }
@@ -130,6 +119,59 @@
     .project-chip .name { font-weight: 600; }
     .project-chip .stack { color: var(--muted); font-size: 0.78rem; }
 
+    /* ── Terminal Steps ── */
+    .terminal {
+      background: #0c0c0c; border: 1px solid var(--border); border-radius: 16px;
+      overflow: hidden; max-width: 720px; margin: 0 auto;
+    }
+    .terminal-bar {
+      display: flex; align-items: center; gap: 6px; padding: 12px 16px;
+      background: #1a1a1a; border-bottom: 1px solid var(--border);
+    }
+    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .terminal-dot.r { background: #ff5f57; } .terminal-dot.y { background: #febc2e; } .terminal-dot.g { background: #28c840; }
+    .terminal-title { margin-left: 8px; font-size: 0.75rem; color: var(--muted); font-family: monospace; }
+    .terminal-body { padding: 1.5rem; font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 0.85rem; line-height: 1.9; }
+    .terminal-body .line { opacity: 0; animation: typeLine 0.3s forwards; white-space: nowrap; overflow: hidden; }
+    .terminal-body .prompt { color: var(--green); }
+    .terminal-body .cmd { color: var(--text); }
+    .terminal-body .flag { color: var(--accent); }
+    .terminal-body .comment { color: #555; font-style: italic; }
+    .terminal-body .output { color: var(--muted); }
+    .terminal-body .success { color: var(--green); }
+    .terminal-body .score-val { color: var(--accent); font-weight: 700; font-size: 1.1rem; }
+    .terminal-body .spacer { height: 0.5rem; }
+    .terminal-body .divider { color: #333; }
+
+    @keyframes typeLine {
+      from { opacity: 0; max-width: 0; }
+      to { opacity: 1; max-width: 100%; }
+    }
+    .line:nth-child(1)  { animation-delay: 0.2s; }
+    .line:nth-child(2)  { animation-delay: 0.5s; }
+    .line:nth-child(3)  { animation-delay: 1.0s; }
+    .line:nth-child(4)  { animation-delay: 1.4s; }
+    .line:nth-child(5)  { animation-delay: 1.8s; }
+    .line:nth-child(6)  { animation-delay: 2.0s; }
+    .line:nth-child(7)  { animation-delay: 2.5s; }
+    .line:nth-child(8)  { animation-delay: 3.0s; }
+    .line:nth-child(9)  { animation-delay: 3.5s; }
+    .line:nth-child(10) { animation-delay: 3.8s; }
+    .line:nth-child(11) { animation-delay: 4.3s; }
+    .line:nth-child(12) { animation-delay: 4.8s; }
+    .line:nth-child(13) { animation-delay: 5.0s; }
+    .line:nth-child(14) { animation-delay: 5.5s; }
+    .line:nth-child(15) { animation-delay: 6.0s; }
+    .line:nth-child(16) { animation-delay: 6.2s; }
+    .line:nth-child(17) { animation-delay: 6.7s; }
+    .line:nth-child(18) { animation-delay: 7.2s; }
+    .line:nth-child(19) { animation-delay: 7.7s; }
+    .line:nth-child(20) { animation-delay: 8.0s; }
+    .line:nth-child(21) { animation-delay: 8.5s; }
+    .line:nth-child(22) { animation-delay: 8.7s; }
+    .line:nth-child(23) { animation-delay: 9.2s; }
+    .line:nth-child(24) { animation-delay: 9.5s; }
+
     /* ── Footer ── */
     footer {
       text-align: center; padding: 3rem 2rem; color: var(--muted); font-size: 0.85rem;
@@ -179,27 +221,39 @@
   <!-- How it works -->
   <section>
     <h2>How it works</h2>
-    <p class="section-sub">Clone. Run one command. Get a score. That's it.</p>
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">Step 1</div>
-        <h3>Clone & install</h3>
-        <p><code style="font-size:0.82rem;color:var(--accent)">git clone ... && cd _scoring && npm install</code><br>Then generate the blind copy (bug markers stripped).</p>
+    <p class="section-sub">Three commands. One score. Zero excuses.</p>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="terminal-dot r"></span>
+        <span class="terminal-dot y"></span>
+        <span class="terminal-dot g"></span>
+        <span class="terminal-title">trashfire ~ benchmark</span>
       </div>
-      <div class="step">
-        <div class="step-num">Step 2</div>
-        <h3>Run one command</h3>
-        <p><code style="font-size:0.82rem;color:var(--accent)">bash run-benchmark.sh</code><br>Pick a project, pick a prompt preset (or type your own). Done.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">Step 3</div>
-        <h3>Get your score</h3>
-        <p>The script runs the AI review, scores it against encrypted ground truth, and prints a full report with recall, precision, and per-category breakdown.</p>
-      </div>
-      <div class="step">
-        <div class="step-num">Step 4</div>
-        <h3>Compare on the leaderboard</h3>
-        <p>Results are saved automatically. Run different models, prompts, or skills and see who finds the most bugs.</p>
+      <div class="terminal-body">
+        <div class="line comment"># Step 1: Clone & install</div>
+        <div class="line"><span class="prompt">$ </span><span class="cmd">git clone https://github.com/ktdmax/trashfire.git</span></div>
+        <div class="line"><span class="prompt">$ </span><span class="cmd">cd trashfire && cd _scoring && npm install && cd ..</span></div>
+        <div class="line"><span class="prompt">$ </span><span class="cmd">bash _scoring/create-blind-copy.sh</span></div>
+        <div class="line output">Blind copy complete: 765 files in 42 projects</div>
+        <div class="line spacer"></div>
+        <div class="line comment"># Step 2: Run a benchmark</div>
+        <div class="line"><span class="prompt">$ </span><span class="cmd">bash run-benchmark.sh <span class="flag">grog-shop</span></span></div>
+        <div class="line output"></div>
+        <div class="line output">  <span style="color:var(--red);font-weight:700">TRASHFIRE</span> - AI Code Review Benchmark</div>
+        <div class="line output">  Pick a preset: <span class="flag">dev-savvy</span></div>
+        <div class="line output">  Running review... (2-5 min)</div>
+        <div class="line output">  <span class="success">Findings extracted: 62 issues found</span></div>
+        <div class="line output">  Scoring against ground truth...</div>
+        <div class="line spacer"></div>
+        <div class="line comment"># Step 3: Get your score</div>
+        <div class="line divider">  ========================================</div>
+        <div class="line output">  <span class="score-val">COMPOSITE SCORE: 45.2%</span></div>
+        <div class="line output">  Issues Found: 62 / 100 | FP: 27</div>
+        <div class="line divider">  ----------------------------------------</div>
+        <div class="line output">  SEC     58.8% | TRICKY  76.8%</div>
+        <div class="line output">  LOGIC    0.0% | PERF    93.8%</div>
+        <div class="line divider">  ========================================</div>
+        <div class="line output">  <span class="success">Results saved to: _results/dev-savvy-grog-shop/</span></div>
       </div>
     </div>
   </section>
