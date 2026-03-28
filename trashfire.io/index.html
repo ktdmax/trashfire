@@ -72,31 +72,63 @@
 
     /* ── Leaderboard ── */
     #leaderboard { background: var(--surface); border-radius: 20px; border: 1px solid var(--border); padding: 2.5rem; margin-top: 1rem; }
-    .lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
     .lb-header h2 { margin-bottom: 0; }
     .lb-updated { color: var(--muted); font-size: 0.85rem; }
+    .lb-controls { display: flex; gap: 0.5rem; align-items: center; }
+    .lb-controls .hint { font-size: 0.78rem; color: var(--muted); }
+    .btn-compare {
+      padding: 0.4rem 1rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+      background: var(--accent); color: #fff; border: none; cursor: pointer; display: none;
+    }
+    .btn-compare:hover { background: var(--accent2); }
+    .btn-compare.active { display: inline-block; }
     table { width: 100%; border-collapse: collapse; }
     thead th {
-      text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; font-weight: 600;
+      text-align: left; padding: 0.75rem 1rem; font-size: 0.72rem; font-weight: 600;
       color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
       border-bottom: 1px solid var(--border);
     }
-    thead th:nth-child(5), thead th:nth-child(6), thead th:nth-child(7), thead th:nth-child(8) { text-align: right; }
-    tbody td {
-      padding: 1rem; border-bottom: 1px solid rgba(63,63,70,0.5); vertical-align: middle;
-    }
-    tbody td:nth-child(5), tbody td:nth-child(6), tbody td:nth-child(7), tbody td:nth-child(8) { text-align: right; font-variant-numeric: tabular-nums; }
-    tbody tr:hover { background: rgba(249,115,22,0.04); }
+    thead .right { text-align: right; }
+    tbody td { padding: 0.85rem 1rem; border-bottom: 1px solid rgba(63,63,70,0.5); vertical-align: middle; }
+    tbody .right { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr { cursor: pointer; transition: background 0.15s; }
+    tbody tr:hover { background: rgba(249,115,22,0.06); }
+    tbody tr.selected { background: rgba(249,115,22,0.1); border-left: 3px solid var(--accent); }
+    tbody tr.compare-b { background: rgba(34,197,94,0.08); border-left: 3px solid var(--green); }
     .rank { font-size: 1.2rem; width: 50px; text-align: center; }
     .model-name { font-weight: 600; }
-    .model-provider { font-size: 0.8rem; color: var(--muted); }
+    .model-provider { font-size: 0.78rem; color: var(--muted); }
     .score { font-weight: 700; color: var(--green); font-size: 1.05rem; }
     .preset-tag {
-      display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem;
+      display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem;
       background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
     }
+    .found-bar { display: flex; align-items: center; gap: 6px; }
+    .found-bar-bg { width: 50px; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .found-bar-fill { height: 100%; background: var(--green); border-radius: 3px; }
     .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
     .empty-state p { margin-bottom: 1rem; }
+
+    /* ── Radar / Detail Panel ── */
+    .detail-panel {
+      margin-top: 1.5rem; padding: 2rem; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 16px; display: none;
+    }
+    .detail-panel.open { display: block; animation: fadeIn 0.3s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+    .radar-wrap { display: flex; justify-content: center; align-items: center; }
+    .detail-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .detail-stat {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem;
+    }
+    .detail-stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .detail-stat-value { font-size: 1.25rem; font-weight: 700; margin-top: 0.15rem; }
+    .detail-legend { display: flex; gap: 1.5rem; margin-top: 1rem; justify-content: center; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
 
     /* ── Categories ── */
     .cats { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
@@ -280,8 +312,21 @@
           <h2>Leaderboard</h2>
           <span class="lb-updated" id="lb-date"></span>
         </div>
+        <div class="lb-controls">
+          <span class="hint" id="lb-hint">Click a row to see the radar chart. Click a second to compare.</span>
+          <button class="btn-compare" id="btn-clear" onclick="clearSelection()">Clear</button>
+        </div>
       </div>
       <div id="lb-table"></div>
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-grid">
+          <div class="radar-wrap"><canvas id="radar" width="360" height="360"></canvas></div>
+          <div>
+            <div class="detail-stats" id="detail-stats"></div>
+            <div class="detail-legend" id="detail-legend"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -305,163 +350,254 @@
   </footer>
 
   <script>
-    // ── Leaderboard Data ──
-    // Embedded from results  - update this when new runs are added
+    // ── Data (enriched with category scores from actual benchmark reports) ──
     const RESULTS = [
-  {
-    "run_id": "dev-savvy-claude-opus-mn9xm57i",
-    "timestamp": "2026-03-28T06:11:01.216Z",
-    "model": "claude-opus-4-6",
-    "model_display": "Claude Opus 4.6",
-    "provider": "anthropic",
-    "preset": "dev-savvy",
-    "skills": [],
-    "skill_source": "none",
-    "projects_tested": 1,
-    "composite_score": 0.4521555528572386,
-    "recall": 0,
-    "precision": 0,
-    "found": 62,
-    "total": 100,
-    "false_positives": 27,
-    "duration_ms": 0,
-    "tags": []
-  },
-  {
-    "run_id": "vanilla-claude-opus-mn9xm3pu",
-    "timestamp": "2026-03-28T06:10:59.286Z",
-    "model": "claude-opus-4-6",
-    "model_display": "Claude Opus 4.6",
-    "provider": "anthropic",
-    "preset": "vanilla",
-    "skills": [],
-    "skill_source": "none",
-    "projects_tested": 1,
-    "composite_score": 0.4107569325811542,
-    "recall": 0,
-    "precision": 0,
-    "found": 57,
-    "total": 100,
-    "false_positives": 18,
-    "duration_ms": 0,
-    "tags": []
-  },
-  {
-    "run_id": "expert-claude-opus-mn9xlvv8",
-    "timestamp": "2026-03-28T06:10:49.182Z",
-    "model": "claude-opus-4-6",
-    "model_display": "Claude Opus 4.6",
-    "provider": "anthropic",
-    "preset": "expert",
-    "skills": [],
-    "skill_source": "none",
-    "projects_tested": 1,
-    "composite_score": 0.3771954053709535,
-    "recall": 0,
-    "precision": 0,
-    "found": 57,
-    "total": 100,
-    "false_positives": 17,
-    "duration_ms": 0,
-    "tags": []
-  }
-];
-
-    const PROJECTS = [
-      { name: "grog-shop", stack: "Next.js + Prisma" },
-      { name: "tentacle-labs", stack: "Flask + SQLAlchemy" },
-      { name: "scumm-bar", stack: "Express + MongoDB" },
-      { name: "manny-travel", stack: "React + Postgres" },
-      { name: "sam-max-cases", stack: "Django + DRF" },
-      { name: "full-throttle", stack: "Go + Docker + K8s" },
-      { name: "loom-weaver", stack: "Vanilla JS" },
-      { name: "zak-mckracken", stack: "PHP + Python + JS" },
-      { name: "monkey-wrench", stack: "Ruby on Rails" },
-      { name: "day-of-the-tentacle", stack: "Elixir + Phoenix" },
-      { name: "indy-fortune", stack: "Spring Boot + Java" },
-      { name: "wally-b-feed", stack: "Kotlin + WebFlux" },
-      { name: "guybrush-ledger", stack: "Rust + Actix-web" },
-      { name: "elaine-marley-mesh", stack: "Rust + Axum" },
-      { name: "lechuck-crypt", stack: "C + OpenSSL" },
-      { name: "murrayd-signal", stack: "C++ + Boost.Asio" },
-      { name: "purcell-vault", stack: "C# + .NET 8" },
-      { name: "voodoo-queen", stack: "Swift + Vapor" },
-      { name: "stan-salesman", stack: "Kotlin + Ktor" },
-      { name: "fate-of-atlantis", stack: "Scala + Play" },
-      { name: "melee-island-analytics", stack: "R + Shiny" },
-      { name: "woodtick-pipeline", stack: "Python + Airflow" },
-      { name: "brink-deployer", stack: "Terraform + CDK" },
-      { name: "dig-site-graphql", stack: "Apollo + GraphQL" },
-      { name: "bone-song-rpc", stack: "Go + gRPC" },
-      { name: "phatt-island-chat", stack: "Socket.IO + Redis" },
-      { name: "largo-lagrande-lambda", stack: "AWS Lambda + SAM" },
-      { name: "governor-phatt-mobile", stack: "React Native" },
-      { name: "herman-toothrot-vue", stack: "Vue 3 + Supabase" },
-      { name: "carla-svelte", stack: "SvelteKit + Drizzle" },
-      { name: "ozzie-mandrill-ml", stack: "FastAPI + MLflow" },
-      { name: "wally-feeds-flutter", stack: "Flutter + Firebase" },
-      { name: "spiffy-anchor", stack: "Solidity + Hardhat" },
-      { name: "captain-dread-pipe", stack: "Julia + Genie.jl" },
-      { name: "stan-glass-store", stack: "Laravel + Livewire" },
-      { name: "jojo-the-monkey", stack: "Deno + Fresh" },
-      { name: "griswold-locksmith", stack: "Python + Typer CLI" },
-      { name: "bob-the-ghost", stack: "Haskell + Servant" },
-      { name: "porcelain-pirates", stack: "Perl + Mojolicious" },
-      { name: "pegbiter-monitor", stack: "Zig + C interop" },
-      { name: "otis-escape-room", stack: "Litestar + Stripe" },
-      { name: "cobb-dataforge", stack: "dbt + Snowflake" },
+      {
+        run_id: "dev-savvy-claude-opus", timestamp: "2026-03-28T06:11:01Z",
+        model: "claude-opus-4-6", model_display: "Claude Opus 4.6", provider: "anthropic",
+        preset: "dev-savvy", skills: [], skill_source: "none",
+        composite_score: 0.452, found: 62, total: 100, false_positives: 27,
+        recall: 0.62, precision: 0.70,
+        cats: { SEC: 0.528, LOGIC: 0, PERF: 0.938, BP: 0, SMELL: 0.775, TRICKY: 0.768 }
+      },
+      {
+        run_id: "vanilla-claude-opus", timestamp: "2026-03-28T06:10:59Z",
+        model: "claude-opus-4-6", model_display: "Claude Opus 4.6", provider: "anthropic",
+        preset: "vanilla", skills: [], skill_source: "none",
+        composite_score: 0.411, found: 57, total: 100, false_positives: 18,
+        recall: 0.57, precision: 0.76,
+        cats: { SEC: 0.496, LOGIC: 0, PERF: 0.938, BP: 0, SMELL: 0.775, TRICKY: 0.571 }
+      },
+      {
+        run_id: "expert-claude-opus", timestamp: "2026-03-28T06:10:49Z",
+        model: "claude-opus-4-6", model_display: "Claude Opus 4.6", provider: "anthropic",
+        preset: "expert", skills: [], skill_source: "none",
+        composite_score: 0.377, found: 57, total: 100, false_positives: 17,
+        recall: 0.57, precision: 0.77,
+        cats: { SEC: 0.506, LOGIC: 0, PERF: 0.813, BP: 0, SMELL: 0.775, TRICKY: 0.465 }
+      }
     ];
 
-    // ── Render ──
+    const CATS = ["SEC","LOGIC","PERF","BP","SMELL","TRICKY"];
+    const CAT_LABELS = { SEC:"Security", LOGIC:"Logic", PERF:"Performance", BP:"Best Practice", SMELL:"Code Smell", TRICKY:"Tricky" };
+    const PROJECTS = [
+      {n:"grog-shop",s:"Next.js"},{n:"tentacle-labs",s:"Flask"},{n:"scumm-bar",s:"Express"},
+      {n:"manny-travel",s:"React+PG"},{n:"sam-max-cases",s:"Django"},{n:"full-throttle",s:"Go+K8s"},
+      {n:"loom-weaver",s:"Vanilla JS"},{n:"zak-mckracken",s:"PHP+Py+JS"},{n:"monkey-wrench",s:"Rails"},
+      {n:"day-of-the-tentacle",s:"Elixir"},{n:"indy-fortune",s:"Spring"},{n:"wally-b-feed",s:"Kotlin"},
+      {n:"guybrush-ledger",s:"Rust/Actix"},{n:"elaine-marley-mesh",s:"Rust/Axum"},
+      {n:"lechuck-crypt",s:"C"},{n:"murrayd-signal",s:"C++"},{n:"purcell-vault",s:"C#/.NET"},
+      {n:"voodoo-queen",s:"Swift"},{n:"stan-salesman",s:"Ktor"},{n:"fate-of-atlantis",s:"Scala"},
+      {n:"melee-island-analytics",s:"R/Shiny"},{n:"woodtick-pipeline",s:"Airflow"},
+      {n:"brink-deployer",s:"Terraform"},{n:"dig-site-graphql",s:"GraphQL"},
+      {n:"bone-song-rpc",s:"gRPC"},{n:"phatt-island-chat",s:"Socket.IO"},
+      {n:"largo-lagrande-lambda",s:"Lambda"},{n:"governor-phatt-mobile",s:"React Native"},
+      {n:"herman-toothrot-vue",s:"Vue 3"},{n:"carla-svelte",s:"SvelteKit"},
+      {n:"ozzie-mandrill-ml",s:"FastAPI+ML"},{n:"wally-feeds-flutter",s:"Flutter"},
+      {n:"spiffy-anchor",s:"Solidity"},{n:"captain-dread-pipe",s:"Julia"},
+      {n:"stan-glass-store",s:"Laravel"},{n:"jojo-the-monkey",s:"Deno"},
+      {n:"griswold-locksmith",s:"Python CLI"},{n:"bob-the-ghost",s:"Haskell"},
+      {n:"porcelain-pirates",s:"Perl"},{n:"pegbiter-monitor",s:"Zig"},
+      {n:"otis-escape-room",s:"Litestar"},{n:"cobb-dataforge",s:"dbt"},
+    ];
+
+    // ── State ──
+    let selectedA = null, selectedB = null;
+
     function pct(n) { return (n * 100).toFixed(1) + "%"; }
-    function medal(i) { return ["🥇","🥈","🥉"][i] || `#${i+1}`; }
+    function medal(i) { return ["\u{1F947}","\u{1F948}","\u{1F949}"][i] || `#${i+1}`; }
 
-    function renderLeaderboard() {
-      document.getElementById("run-count").textContent = RESULTS.length;
+    // ── Radar Chart (Canvas) ──
+    function drawRadar(canvasId, dataA, dataB, labelA, labelB) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = 360 * dpr; canvas.height = 360 * dpr;
+      canvas.style.width = "360px"; canvas.style.height = "360px";
+      ctx.scale(dpr, dpr);
 
-      if (RESULTS.length === 0) {
-        document.getElementById("lb-table").innerHTML = `
-          <div class="empty-state">
-            <p>No benchmark results yet.</p>
-            <a href="https://github.com/ktdmax/trashfire#quick-start" class="btn btn-primary" target="_blank">Run your first benchmark</a>
-          </div>`;
-        return;
+      const cx = 180, cy = 180, maxR = 140;
+      const n = CATS.length;
+      const angleStep = (2 * Math.PI) / n;
+      const startAngle = -Math.PI / 2;
+
+      ctx.clearRect(0, 0, 360, 360);
+
+      // Grid rings
+      [0.2, 0.4, 0.6, 0.8, 1.0].forEach(pctVal => {
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const a = startAngle + i * angleStep;
+          const r = maxR * pctVal;
+          const x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = "rgba(63,63,70,0.5)"; ctx.lineWidth = 1; ctx.stroke();
+        // Percentage label
+        if (pctVal < 1) {
+          ctx.fillStyle = "#555"; ctx.font = "10px sans-serif";
+          ctx.fillText(Math.round(pctVal*100)+"%", cx + 3, cy - maxR * pctVal + 12);
+        }
+      });
+
+      // Axis lines + labels
+      for (let i = 0; i < n; i++) {
+        const a = startAngle + i * angleStep;
+        const ex = cx + maxR * Math.cos(a), ey = cy + maxR * Math.sin(a);
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey);
+        ctx.strokeStyle = "rgba(63,63,70,0.3)"; ctx.stroke();
+        // Label
+        const lx = cx + (maxR + 18) * Math.cos(a), ly = cy + (maxR + 18) * Math.sin(a);
+        ctx.fillStyle = "#a1a1aa"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(CAT_LABELS[CATS[i]], lx, ly);
       }
 
+      // Draw data polygon
+      function drawPoly(data, fillColor, strokeColor) {
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const idx = i % n;
+          const a = startAngle + idx * angleStep;
+          const val = data[CATS[idx]] || 0;
+          const r = maxR * val;
+          const x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fillColor; ctx.fill();
+        ctx.strokeStyle = strokeColor; ctx.lineWidth = 2.5; ctx.stroke();
+        // Dots
+        for (let i = 0; i < n; i++) {
+          const a = startAngle + i * angleStep;
+          const val = data[CATS[i]] || 0;
+          const r = maxR * val;
+          ctx.beginPath();
+          ctx.arc(cx + r * Math.cos(a), cy + r * Math.sin(a), 4, 0, Math.PI * 2);
+          ctx.fillStyle = strokeColor; ctx.fill();
+        }
+      }
+
+      // Draw B first (behind), then A
+      if (dataB) drawPoly(dataB, "rgba(34,197,94,0.1)", "rgba(34,197,94,0.7)");
+      drawPoly(dataA, "rgba(249,115,22,0.15)", "rgba(249,115,22,0.9)");
+
+      // Legend
+      const legend = document.getElementById("detail-legend");
+      if (dataB) {
+        legend.innerHTML = `
+          <div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>${labelA}</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--green)"></span>${labelB}</div>`;
+      } else {
+        legend.innerHTML = `<div class="legend-item"><span class="legend-dot" style="background:var(--accent)"></span>${labelA}</div>`;
+      }
+    }
+
+    // ── Detail Stats ──
+    function renderStats(r, compareR) {
+      const stats = document.getElementById("detail-stats");
+      const pairs = [
+        ["Score", pct(r.composite_score), compareR ? pct(compareR.composite_score) : null],
+        ["Found", `${r.found}/${r.total}`, compareR ? `${compareR.found}/${compareR.total}` : null],
+        ["Recall", pct(r.recall), compareR ? pct(compareR.recall) : null],
+        ["Precision", pct(r.precision), compareR ? pct(compareR.precision) : null],
+        ["False Pos", r.false_positives, compareR ? compareR.false_positives : null],
+        ["Projects", r.projects_tested || 1, compareR ? (compareR.projects_tested || 1) : null],
+      ];
+      stats.innerHTML = pairs.map(([label, val, cmpVal]) => `
+        <div class="detail-stat">
+          <div class="detail-stat-label">${label}</div>
+          <div class="detail-stat-value">${val}${cmpVal !== null ? ` <span style="color:var(--green);font-size:0.85rem">vs ${cmpVal}</span>` : ''}</div>
+        </div>`).join("");
+    }
+
+    // ── Row Selection ──
+    function selectRow(idx) {
+      if (selectedA === idx) {
+        // Deselect
+        selectedA = null; selectedB = null;
+        document.getElementById("detail-panel").classList.remove("open");
+        document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("selected","compare-b"));
+        document.getElementById("btn-clear").classList.remove("active");
+        document.getElementById("lb-hint").textContent = "Click a row to see the radar chart. Click a second to compare.";
+        return;
+      }
+      if (selectedA === null) {
+        selectedA = idx; selectedB = null;
+        document.getElementById("lb-hint").textContent = "Click another row to compare.";
+      } else if (selectedB === null && idx !== selectedA) {
+        selectedB = idx;
+        document.getElementById("lb-hint").textContent = "";
+      } else {
+        selectedA = idx; selectedB = null;
+        document.getElementById("lb-hint").textContent = "Click another row to compare.";
+      }
+
+      // Highlight rows
+      document.querySelectorAll("tbody tr").forEach((tr, i) => {
+        tr.classList.toggle("selected", i === selectedA);
+        tr.classList.toggle("compare-b", i === selectedB);
+      });
+      document.getElementById("btn-clear").classList.toggle("active", selectedA !== null);
+
+      // Show panel
+      const panel = document.getElementById("detail-panel");
+      panel.classList.add("open");
+
+      const a = RESULTS[selectedA];
+      const b = selectedB !== null ? RESULTS[selectedB] : null;
+      const labelA = `${a.model_display} (${a.preset})`;
+      const labelB = b ? `${b.model_display} (${b.preset})` : null;
+
+      drawRadar("radar", a.cats, b ? b.cats : null, labelA, labelB);
+      renderStats(a, b);
+    }
+
+    function clearSelection() {
+      selectedA = null; selectedB = null;
+      document.getElementById("detail-panel").classList.remove("open");
+      document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("selected","compare-b"));
+      document.getElementById("btn-clear").classList.remove("active");
+      document.getElementById("lb-hint").textContent = "Click a row to see the radar chart. Click a second to compare.";
+    }
+
+    // ── Render Leaderboard Table ──
+    function renderLeaderboard() {
+      document.getElementById("run-count").textContent = RESULTS.length;
+      if (RESULTS.length === 0) {
+        document.getElementById("lb-table").innerHTML = `<div class="empty-state"><p>No benchmark results yet.</p><a href="https://github.com/ktdmax/trashfire#quick-start" class="btn btn-primary" target="_blank">Run your first benchmark</a></div>`;
+        return;
+      }
       document.getElementById("lb-date").textContent =
         "Updated " + new Date(RESULTS[0].timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
       let html = `<table><thead><tr>
         <th>Rank</th><th>Model</th><th>Strategy</th><th>Skills</th>
-        <th>Score</th><th>Recall</th><th>Precision</th><th>FP</th>
+        <th class="right">Score</th><th class="right">Found</th><th class="right">Recall</th><th class="right">FP</th>
       </tr></thead><tbody>`;
 
       RESULTS.forEach((r, i) => {
-        const skills = r.skills.length > 0
-          ? (r.skill_source === "supaskills" ? `SupaSkills` : r.skills.join(", "))
-          : " -";
-        html += `<tr>
+        const skills = r.skills.length > 0 ? (r.skill_source === "supaskills" ? "SupaSkills" : r.skills.join(", ")) : "-";
+        const foundPct = r.total > 0 ? r.found / r.total : 0;
+        html += `<tr onclick="selectRow(${i})">
           <td class="rank">${medal(i)}</td>
           <td><div class="model-name">${r.model_display}</div><div class="model-provider">${r.provider}</div></td>
           <td><span class="preset-tag">${r.preset}</span></td>
-          <td>${skills}</td>
-          <td class="score">${pct(r.composite_score)}</td>
-          <td>${pct(r.recall || 0)}</td>
-          <td>${pct(r.precision || 0)}</td>
-          <td>${r.false_positives}</td>
+          <td style="color:var(--muted);font-size:0.85rem">${skills}</td>
+          <td class="right score">${pct(r.composite_score)}</td>
+          <td class="right"><div class="found-bar"><span>${r.found}/${r.total}</span><div class="found-bar-bg"><div class="found-bar-fill" style="width:${foundPct*100}%"></div></div></div></td>
+          <td class="right">${pct(r.recall)}</td>
+          <td class="right" style="color:${r.false_positives > 20 ? 'var(--red)' : 'var(--muted)'}">${r.false_positives}</td>
         </tr>`;
       });
-
       html += "</tbody></table>";
       document.getElementById("lb-table").innerHTML = html;
     }
 
+    // ── Render Projects ──
     function renderProjects() {
-      const grid = document.getElementById("project-list");
-      grid.innerHTML = PROJECTS.map(p => `
-        <div class="project-chip">
-          <div><div class="name">${p.name}</div><div class="stack">${p.stack}</div></div>
-        </div>`).join("");
+      document.getElementById("project-list").innerHTML = PROJECTS.map(p => `
+        <div class="project-chip"><div><div class="name">${p.n}</div><div class="stack">${p.s}</div></div></div>`).join("");
     }
 
     renderLeaderboard();
