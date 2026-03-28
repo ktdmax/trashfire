@@ -457,8 +457,8 @@ function main() {
     const outDirIdx = args.indexOf("--out-dir");
     const outDir = outDirIdx !== -1 ? args[outDirIdx + 1] : join(rootDir, "_manifests");
 
-    const projectsDir = join(rootDir, "projects");
-    const scanDir = existsSync(projectsDir) ? projectsDir : rootDir;
+    const vaultsDir = join(rootDir, "vaults");
+    const scanDir = existsSync(vaultsDir) ? vaultsDir : rootDir;
     const entries = readdirSync(scanDir, { withFileTypes: true });
     const projects = entries
       .filter(e => e.isDirectory() && !e.name.startsWith("_") && !e.name.startsWith(".") && e.name !== "node_modules")

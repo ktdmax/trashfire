@@ -37,7 +37,7 @@ Per-project commands depend on the framework (see tech stack table below).
 
 ```
 trashfire/
-  projects/            # 42 vulnerable mini-apps (see tech stack below)
+  vaults/            # 42 vulnerable mini-apps (see tech stack below)
   _manifests/          # Encrypted ground truth (.enc files, AES-256-GCM)
   _scoring/            # TypeScript scoring engine, crypto module, strip script
     types.ts           # All TypeScript interfaces and constants
