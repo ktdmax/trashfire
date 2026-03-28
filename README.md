@@ -103,27 +103,20 @@ Each project includes 5-10 **red herrings**  - code that *looks* vulnerable but 
 ## Quick Start
 
 ```bash
-# Clone the repo
-git clone https://github.com/YOUR_USER/trashfire.git
+# 1. Clone and install
+git clone https://github.com/ktdmax/trashfire.git
 cd trashfire
-
-# Install scoring tools
 cd _scoring && npm install && cd ..
 
-# Run a benchmark (single project)
-npx tsx _scoring/benchmark.ts --preset vanilla --project grog-shop
+# 2. Generate the blind testing copy (strips all bug markers)
+bash _scoring/create-blind-copy.sh
 
-# Run a benchmark (all 42 projects)
-npx tsx _scoring/benchmark.ts --preset expert --project all --model claude-opus-4-6
+# 3. Run a benchmark (interactive - picks project + prompt for you)
+bash run-benchmark.sh
 
-# With a custom prompt
-npx tsx _scoring/benchmark.ts --preset custom \
-  --prompt "Find all security vulnerabilities, logic bugs, and performance issues" \
-  --project tentacle-labs
-
-# Generate leaderboard
-npx tsx _scoring/leaderboard.ts --format md --out LEADERBOARD.md
-npx tsx _scoring/leaderboard.ts --format html --out LEADERBOARD.html
+# 4. Or specify project and preset directly
+bash run-benchmark.sh grog-shop              # uses default prompt
+bash run-benchmark.sh tentacle-labs "Your custom review prompt here"
 ```
 
 ## Benchmark Presets

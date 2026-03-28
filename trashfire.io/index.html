@@ -179,27 +179,27 @@
   <!-- How it works -->
   <section>
     <h2>How it works</h2>
-    <p class="section-sub">Give an AI the code. See what it finds. Score it against encrypted ground truth.</p>
+    <p class="section-sub">Clone. Run one command. Get a score. That's it.</p>
     <div class="steps">
       <div class="step">
         <div class="step-num">Step 1</div>
-        <h3>Pick a project</h3>
-        <p>42 realistic mini-apps  - from Next.js e-commerce to Rust service meshes to Solidity smart contracts.</p>
+        <h3>Clone & install</h3>
+        <p><code style="font-size:0.82rem;color:var(--accent)">git clone ... && cd _scoring && npm install</code><br>Then generate the blind copy (bug markers stripped).</p>
       </div>
       <div class="step">
         <div class="step-num">Step 2</div>
-        <h3>Run your reviewer</h3>
-        <p>Any AI model, any prompt, any skills. The blind testing copy has all bug markers stripped.</p>
+        <h3>Run one command</h3>
+        <p><code style="font-size:0.82rem;color:var(--accent)">bash run-benchmark.sh</code><br>Pick a project, pick a prompt preset (or type your own). Done.</p>
       </div>
       <div class="step">
         <div class="step-num">Step 3</div>
-        <h3>Score it</h3>
-        <p>The scoring engine decrypts ground truth and computes precision, recall, and composite score.</p>
+        <h3>Get your score</h3>
+        <p>The script runs the AI review, scores it against encrypted ground truth, and prints a full report with recall, precision, and per-category breakdown.</p>
       </div>
       <div class="step">
         <div class="step-num">Step 4</div>
-        <h3>Compare</h3>
-        <p>See how different models, prompts, and skills stack up on the leaderboard.</p>
+        <h3>Compare on the leaderboard</h3>
+        <p>Results are saved automatically. Run different models, prompts, or skills and see who finds the most bugs.</p>
       </div>
     </div>
   </section>
