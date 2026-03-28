@@ -102,30 +102,42 @@ Each project includes 5-10 **red herrings**  - code that *looks* vulnerable but 
 
 ## Quick Start
 
+### 1. Setup (once)
+
 ```bash
-# 1. Clone and install
 git clone https://github.com/ktdmax/trashfire.git
-cd trashfire
-cd _scoring && npm install && cd ..
-
-# 2. Generate the blind testing copy (strips all bug markers)
-bash _scoring/create-blind-copy.sh
-
-# 3. Run a benchmark (interactive - picks project + prompt for you)
-bash run-benchmark.sh
-
-# 4. Or specify project and preset directly
-bash run-benchmark.sh grog-shop              # uses default prompt
-bash run-benchmark.sh tentacle-labs "Your custom review prompt here"
+cd trashfire/_scoring && npm install && cd ..
 ```
+
+### 2. Review (in your AI tool)
+
+Open your AI coding tool (Claude Code, Cursor, Windsurf, Codex, Gemini, Aider, ...) in the repo folder. Load your skills/prompts if you have any. Then tell it:
+
+> Read every file in vaults/grog-shop/. Find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. For each finding report: file, line, severity, category, cwe, title, description, fix. Save your findings as JSON to review.json
+
+The AI reads the code itself, using its own file tools. No scripts, no API calls, no subprocesses. That's what makes it a real test.
+
+### 3. Score
+
+```bash
+echo "monkey" | npx tsx _scoring/score.ts \
+  --manifest _manifests/grog-shop.enc \
+  --review review.json \
+  --output report.md
+```
+
+Open `report.md` for your composite score, per-category breakdown, and what was found vs missed.
 
 ## Benchmark Presets
 
-| Preset | Description |
-|--------|-------------|
-| `vanilla` | "Review this code for issues"  - baseline, no guidance |
-| `security` | Detailed security reviewer prompt |
-| `thorough` | Experienced developer reviewing for all issue types |
+You're free to use any prompt or skill. Some starting points:
+
+| Approach | Description |
+|----------|-------------|
+| vanilla | Just "review this code for issues" - no guidance |
+| security focus | Tell the AI to focus on security vulnerabilities |
+| thorough | Experienced developer reviewing for all issue types |
+| with skills | Load SupaSkills, Superpowers, or your own prompts before reviewing |
 | `superpowers` | [obra/superpowers](https://github.com/obra/superpowers) methodology |
 | `supaskills-single` | [SupaSkills](https://supaskills.ai) security skill |
 | `supaskills-multi` | SupaSkills multi-skill (security + performance + quality) |

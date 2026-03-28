@@ -146,41 +146,46 @@
 </div>
 
 <section>
-  <h2>Try it now</h2>
-  <p class="sub">Copy this into any AI coding tool (Claude Code, Codex, Gemini, Cursor, ...):</p>
-  <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:10px;padding:1.2rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--m);max-width:720px;white-space:pre-wrap;word-break:break-word" id="prompt-box">Clone https://github.com/ktdmax/trashfire.git and run the benchmark on grog-shop. Read BENCHMARK_RUNNER.md for the protocol. Review every file in vaults/grog-shop/, find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. Output findings as JSON. Score against _manifests/grog-shop.enc (passphrase: monkey). Show me the report.</div>
-  <button onclick="navigator.clipboard.writeText(document.getElementById('prompt-box').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy prompt',1500)" style="margin-top:.75rem;padding:.45rem 1rem;border-radius:6px;font-size:.78rem;font-weight:600;background:var(--o);color:#fff;border:none;cursor:pointer;font-family:monospace">Copy prompt</button>
-</section>
+  <h2>How to run</h2>
+  <p class="sub">Three steps. No scripts. You talk to your AI, it reviews the code, you score the result.</p>
 
-<section>
-  <h2>How it works</h2>
-  <p class="sub">Three commands. One score. Zero excuses.</p>
-  <div class="term">
-    <div class="term-bar"><i class="r"></i><i class="y"></i><i class="g"></i><span>trashfire</span></div>
-    <div class="term-body">
-      <div class="l x"># 1. Setup</div>
-      <div class="l"><span class="p">$ </span><span class="c">git clone https://github.com/ktdmax/trashfire.git</span></div>
-      <div class="l"><span class="p">$ </span><span class="c">cd trashfire && cd _scoring && npm install && cd ..</span></div>
-      <div class="l"><span class="p">$ </span><span class="c">bash _scoring/create-blind-copy.sh</span></div>
-      <div class="l o">Blind copy complete: 765 files in 42 projects</div>
-      <div class="l sp"></div>
-      <div class="l x"># 2. Run</div>
-      <div class="l"><span class="p">$ </span><span class="c">bash run-benchmark.sh <span class="f">grog-shop</span></span></div>
-      <div class="l o">  Preset: <span class="f">thorough</span></div>
-      <div class="l o">  Running review...</div>
-      <div class="l o">  <span class="ok">62 issues found</span></div>
-      <div class="l o">  Scoring against ground truth...</div>
-      <div class="l sp"></div>
-      <div class="l x"># 3. Score</div>
-      <div class="l d">  ========================================</div>
-      <div class="l o">  <span class="big">COMPOSITE SCORE: 45.2%</span></div>
-      <div class="l o">  Found: 62/100 | FP: 27</div>
-      <div class="l d">  ----------------------------------------</div>
-      <div class="l o">  SEC 52.8% | TRICKY 76.8% | PERF 93.8%</div>
-      <div class="l d">  ========================================</div>
-      <div class="l o">  <span class="ok">Results saved to _results/</span></div>
+  <div style="display:flex;flex-direction:column;gap:1.5rem;max-width:720px">
+
+    <!-- Step 1 -->
+    <div style="background:var(--s);border:1px solid var(--b);border-radius:10px;padding:1.25rem">
+      <div style="font-family:'Press Start 2P',monospace;font-size:.6rem;color:var(--o);margin-bottom:.5rem">STEP 1 - SETUP (once)</div>
+      <div style="font-family:monospace;font-size:.82rem;color:var(--m);line-height:1.8">
+        <span style="color:var(--g)">$</span> git clone https://github.com/ktdmax/trashfire.git<br>
+        <span style="color:var(--g)">$</span> cd trashfire/_scoring && npm install && cd ..
+      </div>
     </div>
+
+    <!-- Step 2 -->
+    <div style="background:var(--s);border:1px solid var(--b);border-radius:10px;padding:1.25rem">
+      <div style="font-family:'Press Start 2P',monospace;font-size:.6rem;color:var(--o);margin-bottom:.5rem">STEP 2 - REVIEW</div>
+      <p style="color:var(--m);font-size:.88rem;margin-bottom:.75rem">Open your AI tool in the repo folder. Load your skills if you have any. Then say:</p>
+      <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:8px;padding:1rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--t);white-space:pre-wrap" id="prompt-box">Read every file in vaults/grog-shop/. Find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. For each finding report: file, line, severity, category, cwe, title, description, fix. Save your findings as JSON to review.json</div>
+      <button onclick="navigator.clipboard.writeText(document.getElementById('prompt-box').textContent);this.textContent='Copied!';setTimeout(()=>this.textContent='Copy',1500)" style="margin-top:.5rem;padding:.35rem .8rem;border-radius:5px;font-size:.72rem;font-weight:600;background:var(--o);color:#fff;border:none;cursor:pointer;font-family:monospace">Copy</button>
+    </div>
+
+    <!-- Step 3 -->
+    <div style="background:var(--s);border:1px solid var(--b);border-radius:10px;padding:1.25rem">
+      <div style="font-family:'Press Start 2P',monospace;font-size:.6rem;color:var(--o);margin-bottom:.5rem">STEP 3 - SCORE</div>
+      <div style="font-family:monospace;font-size:.82rem;color:var(--m);line-height:1.8">
+        <span style="color:var(--g)">$</span> echo "monkey" | npx tsx _scoring/score.ts \<br>
+        &nbsp;&nbsp;--manifest _manifests/grog-shop.enc \<br>
+        &nbsp;&nbsp;--review review.json --output report.md
+      </div>
+      <p style="color:var(--m);font-size:.82rem;margin-top:.5rem">That's it. Open report.md for your score.</p>
+    </div>
+
   </div>
+
+  <p style="color:var(--m);font-size:.8rem;margin-top:1.5rem;max-width:720px">
+    Works with <b style="color:var(--t)">any AI tool</b> that can read files: Claude Code, Cursor, Windsurf, Codex, Gemini, Aider, ...
+    The AI reads the code itself using its own tools. No subprocess, no API proxy, no file pasting.
+    That's what makes it a real test.
+  </p>
 </section>
 
 <section>
