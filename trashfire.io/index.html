@@ -191,7 +191,7 @@
         <span onclick="setTier('single')" class="tier-btn" style="padding:.2rem .6rem;border-radius:5px;font-size:.68rem;font-weight:600;cursor:pointer;border:1px solid var(--b);background:var(--s2);color:var(--m)">Focused (1 vault)</span>
         <span onclick="setTier('ultimate')" class="tier-btn" style="padding:.2rem .6rem;border-radius:5px;font-size:.68rem;font-weight:600;cursor:pointer;border:1px solid var(--b);background:var(--s2);color:var(--m)">Ultimate (42 vaults)</span>
       </div>
-      <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:8px;padding:1rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--t);white-space:pre-wrap" id="prompt-box">Review these 3 vaults one by one: vaults/grog-shop/, vaults/tentacle-labs/, vaults/lechuck-crypt/. For each vault, read every file. Find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. For each finding report: file, line, severity, category, cwe, title, description, fix. Save findings per vault as review-VAULTNAME.json</div>
+      <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:8px;padding:1rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--t);white-space:pre-wrap" id="prompt-box">Clone https://github.com/ktdmax/trashfire.git and review these 3 vaults one by one: vaults/grog-shop/, vaults/tentacle-labs/, vaults/lechuck-crypt/. For each vault, read every file. Find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. For each finding report: file, line, severity, category, cwe, title, description, fix. Save findings per vault as review-VAULTNAME.json</div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem;align-items:center">
         <button onclick="copyPrompt()" id="copy-btn" style="padding:.35rem .8rem;border-radius:5px;font-size:.72rem;font-weight:600;background:var(--o);color:#fff;border:none;cursor:pointer;font-family:monospace">Copy</button>
         <span id="tier-info" style="font-size:.7rem;color:var(--m)">3 vaults, ~3 hours, standard benchmark</span>
@@ -388,12 +388,13 @@ function setTier(t){
 function updatePrompt(){
   const v=document.getElementById('vault-select').value;
   const base='Find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. For each finding report: file, line, severity, category, cwe, title, description, fix.';
+  const clone='Clone https://github.com/ktdmax/trashfire.git then ';
   if(currentTier==='quick'){
-    document.getElementById('prompt-box').textContent=`Review these 3 vaults one by one: vaults/grog-shop/, vaults/tentacle-labs/, vaults/lechuck-crypt/. For each vault, read every file. ${base} Save findings per vault as review-VAULTNAME.json`;
+    document.getElementById('prompt-box').textContent=`${clone}review these 3 vaults one by one: vaults/grog-shop/, vaults/tentacle-labs/, vaults/lechuck-crypt/. For each vault, read every file. ${base} Save findings per vault as review-VAULTNAME.json`;
   } else if(currentTier==='ultimate'){
-    document.getElementById('prompt-box').textContent=`Review every vault in vaults/ one by one (all 42). For each vault, read every file. ${base} Save findings per vault as review-VAULTNAME.json`;
+    document.getElementById('prompt-box').textContent=`${clone}review every vault in vaults/ one by one (all 42). For each vault, read every file. ${base} Save findings per vault as review-VAULTNAME.json`;
   } else {
-    document.getElementById('prompt-box').textContent=`Read every file in vaults/${v}/. ${base} Save your findings as JSON to review.json`;
+    document.getElementById('prompt-box').textContent=`${clone}read every file in vaults/${v}/. ${base} Save your findings as JSON to review.json`;
   }
 }
 
