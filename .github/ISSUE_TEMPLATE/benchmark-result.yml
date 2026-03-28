@@ -1,0 +1,101 @@
+name: Benchmark Result
+description: Submit your TRASHFIRE benchmark score
+title: "[Result] MODEL - SCORE% on PROJECT"
+labels: ["benchmark-result"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Submit your benchmark result. The community will verify it.
+        Your skill/prompt must be public (Rule 2).
+
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      placeholder: "e.g. Claude Opus 4.6, Gemini 2.5 Pro, GPT-4o"
+    validations:
+      required: true
+
+  - type: input
+    id: tool
+    attributes:
+      label: Tool used
+      placeholder: "e.g. Claude Code, Cursor, Gemini AI Studio, Codex"
+    validations:
+      required: true
+
+  - type: input
+    id: project
+    attributes:
+      label: Vault (project)
+      placeholder: "e.g. grog-shop"
+    validations:
+      required: true
+
+  - type: input
+    id: score
+    attributes:
+      label: Composite Score
+      placeholder: "e.g. 45.2%"
+    validations:
+      required: true
+
+  - type: input
+    id: found
+    attributes:
+      label: Found / Total
+      placeholder: "e.g. 62/100"
+    validations:
+      required: true
+
+  - type: input
+    id: fp
+    attributes:
+      label: False Positives
+      placeholder: "e.g. 27"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: approach
+    attributes:
+      label: Approach
+      options:
+        - Vanilla (no skill/prompt)
+        - Custom prompt
+        - SupaSkills skill
+        - Superpowers
+        - Custom skill file
+        - Multiple skills combined
+    validations:
+      required: true
+
+  - type: input
+    id: skill_link
+    attributes:
+      label: Skill / Prompt (public link)
+      description: Link to your skill, prompt, or gist. Must be public.
+      placeholder: "https://github.com/you/your-skill or https://gist.github.com/..."
+
+  - type: textarea
+    id: skill_text
+    attributes:
+      label: Skill / Prompt text (if short)
+      description: If your prompt is short, paste it here instead of linking.
+      render: markdown
+
+  - type: textarea
+    id: review_json
+    attributes:
+      label: review.json
+      description: Paste your review.json content or attach the file.
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything else? What worked, what didn't, learnings?

@@ -57,27 +57,40 @@ Write a prompt, a skill file, a SupaSkills skill, or a multi-step workflow that 
 - Tricky edge cases (float arithmetic, type coercion, encoding)
 - Best practice violations that create real risk
 
-### 2. Run the benchmark
+### 2. Setup
 
 ```bash
 git clone https://github.com/ktdmax/trashfire.git
-cd trashfire
-cd _scoring && npm install && cd ..
-bash _scoring/create-blind-copy.sh
-
-# Run with your skill/prompt
-bash run-benchmark.sh grog-shop "Your prompt here"
+cd trashfire/_scoring && npm install && cd ..
 ```
 
-Or use any AI tool (Claude Code, Codex, Gemini, etc.) with the standardized test protocol in [BENCHMARK.md](BENCHMARK.md).
+### 3. Review
 
-### 3. Submit your results
+Open your AI tool (Claude Code, Cursor, Codex, Gemini, ...) in the repo folder.
+Load your skill/prompt. Then tell it to review a vault:
 
-Open a PR or issue with:
-- Your skill/prompt (public link or inline)
-- The `result.json` from your run
-- Which model you used
-- Any notes on your approach
+> Read every file in vaults/grog-shop/. Find all security vulnerabilities, logic bugs,
+> performance issues, and tricky cross-module bugs. Save findings as JSON to review.json
+
+The AI reads the code itself. No scripts, no subprocesses. That's the real test.
+
+### 4. Score
+
+```bash
+echo "monkey" | npx tsx _scoring/score.ts \
+  --manifest _manifests/grog-shop.enc \
+  --review review.json --output report.md
+```
+
+### 5. Submit
+
+Open a [GitHub Issue](https://github.com/ktdmax/trashfire/issues/new/choose) with:
+- Your score and model
+- Your skill/prompt (public link or paste)
+- Your review.json
+
+The community verifies. No central judge. Your skill is public, anyone can re-run it.
+If your score holds up, you're on the leaderboard. If it doesn't, the community will let you know.
 
 ## What We're Looking For
 

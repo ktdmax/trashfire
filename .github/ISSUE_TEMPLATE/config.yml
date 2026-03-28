@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How to run the benchmark
+    url: https://github.com/ktdmax/trashfire/blob/main/BENCHMARK_RUNNER.md
+    about: Read the protocol before submitting
+  - name: Competition rules
+    url: https://github.com/ktdmax/trashfire/blob/main/COMPETITION.md
+    about: Three rules. No loopholes.
