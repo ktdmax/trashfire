@@ -101,26 +101,33 @@ The best submissions will:
 - **Work across different tech stacks** (not just JavaScript or Python)
 - **Be reusable** by other developers in their daily code reviews
 
-## Categories
+## Benchmark Tiers
 
-You can compete in any or all:
+| Tier | Vaults | Time | What it is |
+|------|--------|------|------------|
+| **Standard** | grog-shop + tentacle-labs + lechuck-crypt | ~3h | The official benchmark. JS + Python + C. Your score is the average of all three. |
+| **Focused** | Any single vault | ~1h | For specialized skills. Pick the stack you're best at. |
+| **Ultimate** | All 42 vaults | ~42h | For completionists. You will be honored on the leaderboard. |
+
+## Competition Categories
 
 | Category | What it tests |
 |----------|---------------|
-| **Best Overall Score** | Highest composite score on the full benchmark |
+| **Best Overall** | Highest composite score on the Standard benchmark (3 vaults) |
 | **Best Security** | Highest SEC category score |
 | **Best Bug Hunter** | Highest LOGIC + TRICKY combined score |
 | **Most Precise** | Highest precision (fewest false positives relative to findings) |
-| **Best Multi-Stack** | Highest average score across 5+ different tech stacks |
+| **Best Focused** | Highest score on any single vault |
+| **Ultimate Champion** | Highest average across all 42 vaults |
 
 ## Why This Matters
 
 Every day, millions of lines of code ship with bugs that AI could have caught. The tools exist. The models are good enough. What's missing is the right instructions.
 
-A well-crafted review prompt that catches 20% more bugs isn't just a benchmark win. It's thousands of vulnerabilities found before they reach production. It's fewer breaches, fewer exploits, fewer "we regret to inform you" emails.
+A well-crafted review skill that catches 20% more bugs isn't just a benchmark win. It's thousands of vulnerabilities found before they reach production.
 
 **Build the skill. Share it openly. Make code reviews better for everyone.**
 
 ---
 
-*Questions? Open an issue. Ready to compete? Open a PR.* 🔥
+*Questions? Open an issue. Ready to compete? [Submit your result.](https://github.com/ktdmax/trashfire/issues/new/choose)* 🔥
