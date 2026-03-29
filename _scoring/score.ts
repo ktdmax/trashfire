@@ -82,17 +82,23 @@ function normalizeCWE(raw: string | undefined): string | null {
 // ─── File Path Matching ──────────────────────────────────────────────────────
 
 function pathsMatch(issuePath: string, findingPath: string): boolean {
-  // Normalize: strip leading ./ or project prefix, compare tails
+  // Normalize paths - handle various formats reviewers use:
+  // Manifest: "grog-shop/lib/auth.ts"
+  // Reviewer: "lib/auth.ts", "grog-shop/lib/auth.ts", "./lib/auth.ts",
+  //           "vaults/grog-shop/lib/auth.ts", "_blind/grog-shop/lib/auth.ts"
   const normalize = (p: string) =>
-    p
-      .replace(/^\.\//, "")
-      .replace(/^[^/]+\//, "") // strip first segment (project name)
-      .toLowerCase();
+    p.replace(/^\.\//, "").replace(/^(_blind|vaults)\//, "").toLowerCase();
 
   const a = normalize(issuePath);
   const b = normalize(findingPath);
 
-  return a === b || a.endsWith(b) || b.endsWith(a);
+  if (a === b) return true;
+  if (a.endsWith(b) || b.endsWith(a)) return true;
+  // Strip project prefix from both and compare
+  const stripFirst = (s: string) => s.replace(/^[^/]+\//, "");
+  if (stripFirst(a) === stripFirst(b)) return true;
+  if (stripFirst(a) === b || a === stripFirst(b)) return true;
+  return false;
 }
 
 // ─── Line Proximity ──────────────────────────────────────────────────────────
