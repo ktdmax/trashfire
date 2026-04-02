@@ -94,7 +94,7 @@ REVIEW_FILE="$RUN_DIR/${PROJECT}-review.json"
 
 echo ""
 echo -e "  ${YELLOW}Step 1/3: Running review...${NC}"
-echo -e "  This takes 5-15 minutes depending on project size."
+echo -e "  This takes 30-60 minutes per vault for a thorough review."
 echo ""
 
 # ── Compose review prompt (Layer 0 + Layer 2) ──

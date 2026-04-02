@@ -194,7 +194,7 @@
       <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:8px;padding:1rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--t);white-space:pre-wrap" id="prompt-box">Clone https://github.com/ktdmax/trashfire.git - read BENCHMARK_RUNNER.md for the full rules. Run: cd _scoring && npm install && cd .. && bash _scoring/create-blind-copy.sh. IMPORTANT: Do not grep for BUG markers. The review prompt is in _prompts/base-review.md (defines JSON output format, 6 categories: SEC/LOGIC/PERF/BP/SMELL/TRICKY, severity levels, and rules). Use it as Layer 0. Review these 3 vaults one by one: _blind/grog-shop/, _blind/tentacle-labs/, _blind/lechuck-crypt/. Read each file individually from top to bottom. Cover ALL categories: security, logic, performance, best practices, code smells, and tricky cross-module bugs. Report each finding separately as JSON. Upload results at trashfire.io/#score-section to score against ground truth.</div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem;align-items:center">
         <button onclick="copyPrompt()" id="copy-btn" style="padding:.35rem .8rem;border-radius:5px;font-size:.72rem;font-weight:600;background:var(--o);color:#fff;border:none;cursor:pointer;font-family:monospace">Copy</button>
-        <span id="tier-info" style="font-size:.7rem;color:var(--m)">3 vaults (Next.js + Python + C), ~10-30 min, standard benchmark</span>
+        <span id="tier-info" style="font-size:.7rem;color:var(--m)">3 vaults (Next.js + Python + C), ~1.5-3 hours, standard benchmark</span>
       </div>
     </div>
 
@@ -422,9 +422,9 @@ function setTier(t){
     b.style.borderColor=isOn?'var(--o)':'var(--b)';
   });
   const info=document.getElementById('tier-info');
-  if(t==='quick') info.textContent='3 vaults (Next.js + Python + C), ~10-30 min, standard benchmark';
-  else if(t==='single') info.textContent='1 vault, ~5-15 min, focused test';
-  else info.textContent='All 42 vaults, ~3-8 hours, ultimate benchmark. You will be honored.';
+  if(t==='quick') info.textContent='3 vaults (Next.js + Python + C), ~1.5-3 hours, standard benchmark';
+  else if(t==='single') info.textContent='1 vault, ~30-60 min, focused test';
+  else info.textContent='All 42 vaults, ~20-40 hours, ultimate benchmark. You will be honored.';
   updatePrompt();
 }
 

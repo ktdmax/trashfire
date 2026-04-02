@@ -123,9 +123,9 @@ The best submissions will:
 
 | Tier | Vaults | Time | What it is |
 |------|--------|------|------------|
-| **Standard** | grog-shop + tentacle-labs + lechuck-crypt | ~10-30 min | The official benchmark. JS + Python + C. Your score is the average of all three. |
-| **Focused** | Any single vault | ~5-15 min | For specialized skills. Pick the stack you're best at. |
-| **Ultimate** | All 42 vaults | ~3-8h | For completionists. You will be honored on the leaderboard. |
+| **Standard** | grog-shop + tentacle-labs + lechuck-crypt | ~1.5-3h | The official benchmark. JS + Python + C. Your score is the average of all three. |
+| **Focused** | Any single vault | ~30-60 min | For specialized skills. Pick the stack you're best at. |
+| **Ultimate** | All 42 vaults | ~20-40h | For completionists. You will be honored on the leaderboard. |
 
 ## Competition Categories
 
