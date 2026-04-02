@@ -53,7 +53,13 @@ No gaming the benchmark. No cheating. No shortcuts.
 
 ### 1. Build your skill
 
-Write a prompt, a skill file, a SupaSkills skill, or a multi-step workflow that makes AI code reviews better. Focus on what vanilla prompts miss:
+Every benchmark run uses a 3-layer prompt system (see `BENCHMARK_RUNNER.md`):
+
+- **Layer 0** (`_prompts/base-review.md`) — Output format, 6 categories (SEC/LOGIC/PERF/BP/SMELL/TRICKY), severity, rules. Everyone gets this.
+- **Layer 1** (`_prompts/project-context.ts`) — Tech stack and app type per project. Everyone gets this.
+- **Layer 2** — **Your skill.** This is what you're competing with.
+
+Write a prompt, a skill file, a SupaSkills skill, or a multi-step workflow that makes AI code reviews better. Your Layer 2 adds methodology and expertise on top of the fair baseline. Focus on what vanilla (Layer 0+1 only) misses:
 
 - Logic bugs (off-by-one, race conditions, async issues)
 - Cross-module bugs (function A + function B = vulnerability)
@@ -66,24 +72,32 @@ Write a prompt, a skill file, a SupaSkills skill, or a multi-step workflow that 
 ```bash
 git clone https://github.com/ktdmax/trashfire.git
 cd trashfire/_scoring && npm install && cd ..
+bash _scoring/create-blind-copy.sh
 ```
 
 ### 3. Review
 
 Open your AI tool (Claude Code, Cursor, Codex, Gemini, ...) in the repo folder.
-Load your skill/prompt. Then tell it to review a vault:
+Load your skill/prompt. The base prompt (`_prompts/base-review.md`) is automatically included by the benchmark runners:
 
-> Read every file in vaults/grog-shop/. Find all security vulnerabilities, logic bugs,
-> performance issues, and tricky cross-module bugs. Save findings as JSON to review.json
+```bash
+# Vanilla baseline (Layer 0+1 only)
+./run-benchmark.sh grog-shop
+
+# With your skill as Layer 2
+npx tsx _scoring/benchmark.ts --preset custom --prompt "Your Layer 2 text" --project grog-shop
+```
 
 The AI reads the code itself. No scripts, no subprocesses. That's the real test.
 
 ### 4. Score
 
 ```bash
-echo "monkey" | npx tsx _scoring/score.ts \
-  --manifest _manifests/grog-shop.enc \
-  --review review.json --output report.md
+curl -s -X POST https://trashfire.io/api/score \
+  -H "Content-Type: application/json" \
+  -d "{\"project\": \"grog-shop\", \"review\": $(cat review.json)}" | jq .
+
+# Or upload review.json at https://trashfire.io/#score-section
 ```
 
 ### 5. Submit
@@ -109,9 +123,9 @@ The best submissions will:
 
 | Tier | Vaults | Time | What it is |
 |------|--------|------|------------|
-| **Standard** | grog-shop + tentacle-labs + lechuck-crypt | ~3h | The official benchmark. JS + Python + C. Your score is the average of all three. |
-| **Focused** | Any single vault | ~1h | For specialized skills. Pick the stack you're best at. |
-| **Ultimate** | All 42 vaults | ~42h | For completionists. You will be honored on the leaderboard. |
+| **Standard** | grog-shop + tentacle-labs + lechuck-crypt | ~10-30 min | The official benchmark. JS + Python + C. Your score is the average of all three. |
+| **Focused** | Any single vault | ~5-15 min | For specialized skills. Pick the stack you're best at. |
+| **Ultimate** | All 42 vaults | ~3-8h | For completionists. You will be honored on the leaderboard. |
 
 ## Competition Categories
 

@@ -18,6 +18,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join, basename } from "node:path";
 import { execSync, spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
+import { buildReviewPrompt, getProjectContext } from "../_prompts/project-context.js";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -100,39 +101,43 @@ interface ProjectResult {
   by_difficulty: Record<string, { recall: number; count: number; matched: number }>;
 }
 
-// ─── Prompt Presets ──────────────────────────────────────────────────────────
+// ─── Prompt Presets (Layer 2 additions — appended to base prompt) ────────────
+//
+// Every run gets the same Layer 0 (base-review.md) + Layer 1 (project context).
+// Presets define Layer 2: additional methodology or focus text.
+// Vanilla = empty Layer 2. Skills are loaded separately.
 
-const PRESETS: Record<string, { name: string; prompt: string; skills: string[]; skill_source: string }> = {
+const PRESETS: Record<string, { name: string; layer2: string; skills: string[]; skill_source: string }> = {
   vanilla: {
-    name: "Vanilla (no guidance)",
-    prompt: "Review this codebase for any issues you can find. Check all the files.",
+    name: "Vanilla (base prompt only)",
+    layer2: "",
     skills: [],
     skill_source: "none",
   },
   security: {
     name: "Security Focus",
-    prompt: `You are an security security reviewer. Review this codebase for security vulnerabilities.
-Check every file thoroughly for: SQL injection, XSS, auth bypass, RCE, SSRF, IDOR, CSRF, path traversal,
-command injection, deserialization, hardcoded secrets, weak crypto, and any other security issues.
-For each finding provide: file, line, severity, CWE, title, description, and fix.`,
+    layer2: `Focus extra attention on security vulnerabilities. For each file:
+- Map data flows from untrusted inputs to sensitive operations
+- Check authentication and authorization at every boundary
+- Look for injection vectors: SQL, command, template, deserialization
+- Verify cryptographic operations use strong algorithms and proper parameters
+- Check for hardcoded secrets, debug endpoints, and permissive CORS`,
     skills: [],
     skill_source: "none",
   },
-  "thorough": {
+  thorough: {
     name: "Experienced Developer",
-    prompt: `Review all files in this codebase as an experienced senior developer.
-Find: security bugs (SQLi, XSS, auth issues, injection, SSRF, IDOR), logic errors (race conditions,
-off-by-one, wrong comparisons, missing null checks, async problems), performance problems (N+1 queries,
-memory leaks, blocking calls), bad practices (hardcoded values, swallowed errors, missing validation,
-weak crypto), and tricky cross-function bugs.
-Think about edge cases: empty arrays, negative numbers, Unicode, concurrent requests, float arithmetic
-for money, TOCTOU problems, missing permission checks.`,
+    layer2: `Think like an experienced senior developer who has seen production incidents.
+Pay special attention to edge cases: empty arrays, negative numbers, Unicode input,
+concurrent requests, float arithmetic for money, TOCTOU problems, missing permission
+checks, error paths that skip cleanup, and state transitions that can be triggered
+out of order.`,
     skills: [],
     skill_source: "none",
   },
   superpowers: {
     name: "Superpowers (obra/superpowers)",
-    prompt: `Review this codebase using systematic security analysis. For each file:
+    layer2: `Use systematic analysis for each file:
 1. Map all data flows from untrusted inputs to sensitive operations
 2. Check every authentication and authorization boundary
 3. Identify all cryptographic operations and validate their correctness
@@ -148,19 +153,19 @@ for money, TOCTOU problems, missing permission checks.`,
   },
   "supaskills-single": {
     name: "SupaSkills (single security skill)",
-    prompt: "Review this codebase for security vulnerabilities. Check every file.",
+    layer2: "",
     skills: ["security-code-reviewer"],
     skill_source: "supaskills",
   },
   "supaskills-multi": {
     name: "SupaSkills (multi-skill)",
-    prompt: "Review this codebase for all types of issues - security, performance, code quality, and best practices.",
+    layer2: "",
     skills: ["security-code-reviewer", "performance-analyzer", "code-quality-reviewer"],
     skill_source: "supaskills",
   },
   custom: {
     name: "Custom Prompt",
-    prompt: "", // will be filled from --prompt flag
+    layer2: "", // filled from --prompt flag
     skills: [],
     skill_source: "none",
   },
@@ -221,35 +226,14 @@ function formatDuration(ms: number): string {
 
 // ─── Review Runner ───────────────────────────────────────────────────────────
 
-function buildReviewPrompt(config: BenchmarkConfig, project: string): string {
-  const projectDir = join(config.blind_dir, project);
-  return `${config.prompt_text}
-
-After reviewing ALL files in ${projectDir}, output your complete findings as JSON:
-{
-  "reviewer": "${config.model}",
-  "project": "${project}",
-  "timestamp": "${new Date().toISOString()}",
-  "findings": [
-    {
-      "file": "${project}/path/to/file",
-      "line": 42,
-      "severity": "CRITICAL|HIGH|MEDIUM|LOW",
-      "category": "security|logic|performance|best-practice|tricky",
-      "cwe": "CWE-89",
-      "title": "Short description",
-      "description": "Detailed explanation",
-      "fix": "How to fix"
-    }
-  ]
-}
-
-Write ONLY the JSON to stdout. No other text.`;
+function buildBenchmarkPrompt(config: BenchmarkConfig, project: string): string {
+  // Layer 0 + Layer 1 + Layer 2 composed via shared module
+  return buildReviewPrompt(project, config.prompt_text);
 }
 
 function runReview(config: BenchmarkConfig, project: string, reviewOutputPath: string): number {
   const startTime = Date.now();
-  const prompt = buildReviewPrompt(config, project);
+  const prompt = buildBenchmarkPrompt(config, project);
   const projectDir = join(config.blind_dir, project);
 
   // Build claude command
@@ -659,11 +643,11 @@ function parseArgs(): BenchmarkConfig {
       : model.startsWith("gemini") ? "google"
       : "other",
     prompt_preset: preset,
-    prompt_text: get("--prompt") ?? presetConfig.prompt,
+    prompt_text: get("--prompt") ?? presetConfig.layer2,
     skills: getAll("--skill").length > 0 ? getAll("--skill") : presetConfig.skills,
     skill_source: get("--skill-source") ?? presetConfig.skill_source,
     projects,
-    passphrase: get("--passphrase") ?? "monkey",
+    passphrase: get("--passphrase") ?? process.env.TRASHFIRE_KEY ?? "",
     blind_dir: join(rootDir, "_blind"),
     manifest_dir: join(rootDir, "_manifests"),
     output_dir: join(rootDir, "_results"),
@@ -681,13 +665,13 @@ TRASHFIRE Benchmark Runner
 Usage:
   npx tsx benchmark.ts --preset <name> --project <name|all> [options]
 
-Presets:
-  vanilla          No guidance, just "review this code"
-  security           Expert security reviewer prompt
-  thorough        Experienced developer prompt
-  superpowers      obra/superpowers methodology
-  supaskills-single  SupaSkills security skill
-  supaskills-multi   SupaSkills multi-skill
+Presets (all include base prompt with categories + output format):
+  vanilla            Base prompt only (no Layer 2 addition)
+  security           + security methodology focus
+  thorough           + edge case and cross-module focus
+  superpowers        + obra/superpowers systematic analysis
+  supaskills-single  + SupaSkills security skill
+  supaskills-multi   + SupaSkills multi-skill
   custom           Custom prompt via --prompt flag
 
 Options:
@@ -695,7 +679,7 @@ Options:
   --project <name>   Project to review, or "all" (default: grog-shop)
   --prompt <text>    Custom prompt text (for preset=custom)
   --skill <name>     Add a skill (can be repeated)
-  --passphrase <pw>  Manifest decryption key (default: monkey)
+  --passphrase <pw>  Manifest decryption key (or set TRASHFIRE_KEY env var)
   --tag <tag>        Add a tag (can be repeated)
   --notes <text>     Run notes
   --passes <n>       Number of review passes (default: 1)

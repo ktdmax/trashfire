@@ -120,28 +120,40 @@ The AI reads the code itself, using its own file tools. No scripts, no API calls
 ### 3. Score
 
 ```bash
-echo "monkey" | npx tsx _scoring/score.ts \
-  --manifest _manifests/grog-shop.enc \
-  --review review.json \
-  --output report.md
+curl -s -X POST https://trashfire.io/api/score \
+  -H "Content-Type: application/json" \
+  -d "{\"project\": \"grog-shop\", \"review\": $(cat review.json)}" | jq .
+
+# Or upload review.json at https://trashfire.io/#score-section
 ```
 
-Open `report.md` for your composite score, per-category breakdown, and what was found vs missed.
+The API returns your composite score, per-category breakdown, and what was found vs missed. Or use the drag-and-drop scorer on [trashfire.io](https://trashfire.io/#score-section).
 
-## Benchmark Presets
+## Prompt Architecture
 
-You're free to use any prompt or skill. Some starting points:
+Every benchmark run uses a 3-layer prompt system:
 
-| Approach | Description |
-|----------|-------------|
-| vanilla | Just "review this code for issues" - no guidance |
-| security focus | Tell the AI to focus on security vulnerabilities |
-| thorough | Experienced developer reviewing for all issue types |
-| with skills | Load SupaSkills, Superpowers, or your own prompts before reviewing |
-| `superpowers` | [obra/superpowers](https://github.com/obra/superpowers) methodology |
-| `supaskills-single` | [SupaSkills](https://supaskills.ai) security skill |
-| `supaskills-multi` | SupaSkills multi-skill (security + performance + quality) |
-| `custom` | Your own prompt via `--prompt` flag |
+| Layer | What | Same for everyone? |
+|-------|------|-------------------|
+| **0 — Base** (`_prompts/base-review.md`) | Output JSON format, 6 categories, severity levels, rules | Yes, always |
+| **1 — Context** (`_prompts/project-context.ts`) | Tech stack, app type, languages | Yes, per project |
+| **2 — Skill** (your addition) | Methodology, expertise, focus | **No — this is the variable** |
+
+**Vanilla** = Layer 0 + Layer 1 only (baseline). **Skill run** = Layer 0 + Layer 1 + your skills/prompts.
+
+### Presets
+
+All presets include the base prompt (Layer 0+1). They differ only in Layer 2:
+
+| Preset | Layer 2 |
+|--------|---------|
+| `vanilla` | None — base prompt only |
+| `security` | + security methodology focus |
+| `thorough` | + edge case and cross-module focus |
+| `superpowers` | + [obra/superpowers](https://github.com/obra/superpowers) methodology |
+| `supaskills-single` | + [SupaSkills](https://supaskills.ai) security skill |
+| `supaskills-multi` | + SupaSkills multi-skill (security + perf + quality) |
+| `custom` | + your own prompt via `--prompt` flag |
 
 ## Scoring
 

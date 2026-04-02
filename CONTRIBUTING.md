@@ -8,10 +8,18 @@ Thanks for your interest in the AI code review benchmark!
 
 The most valuable contribution is running the benchmark with different models, prompts, and skill configurations.
 
+Every run uses the 3-layer prompt system (see `BENCHMARK_RUNNER.md`):
+- Layer 0 (`_prompts/base-review.md`) — always included, defines output format + categories
+- Layer 1 (`_prompts/project-context.ts`) — always included, tech stack per project
+- Layer 2 — your skill/prompt addition (the variable being tested)
+
 ```bash
-# Run with your setup
+# Vanilla (Layer 0+1 only)
+./run-benchmark.sh grog-shop
+
+# With custom Layer 2 addition
 npx tsx _scoring/benchmark.ts --preset custom \
-  --prompt "Your prompt here" \
+  --prompt "Your Layer 2 methodology here" \
   --project grog-shop \
   --model your-model-id \
   --tag "your-name" \
@@ -63,8 +71,8 @@ cd _scoring && npm install && cd ..
 # Generate blind testing copy (strips BUG markers)
 bash _scoring/create-blind-copy.sh
 
-# Run a test benchmark
-npx tsx _scoring/benchmark.ts --preset vanilla --project grog-shop
+# Run a test benchmark (uses _prompts/base-review.md as Layer 0)
+./run-benchmark.sh grog-shop
 
 # Regenerate leaderboard
 npx tsx _scoring/leaderboard.ts --format md --out LEADERBOARD.md

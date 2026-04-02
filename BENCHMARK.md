@@ -32,67 +32,47 @@ Start with `grog-shop` (Next.js e-commerce app, 17 files).
 
 The project is in `vaults/grog-shop/` (annotated) or `_blind/grog-shop/` (markers stripped for blind testing).
 
-### Step 2: Give your AI this exact prompt
+### Step 2: Give your AI the review prompt
 
-Copy-paste the prompt below into your AI tool. Replace `[PROJECT]` with the project name.
+The review prompt lives in `_prompts/base-review.md`. It defines:
+- The JSON output format (required for scoring)
+- All 6 issue categories: SEC, LOGIC, PERF, BP, SMELL, TRICKY
+- Severity levels and precision requirements
+
+Copy-paste its contents, or use one of the runners that load it automatically.
 
 ---
 
 ## The Prompt
 
+The canonical prompt is built from three layers (see `BENCHMARK_RUNNER.md` for details):
+
+| Layer | What | Same for everyone? |
+|-------|------|-------------------|
+| **0 — Base** | Output format, categories, severity, rules | Yes, always |
+| **1 — Context** | Tech stack, app type, languages | Yes, per project |
+| **2 — Skill** | Your methodology, prompts, skills | **No — this is what you're testing** |
+
+For a vanilla run, just use Layer 0 + Layer 1 (the base prompt + project info).
+For a skill run, add your skill/prompt as Layer 2.
+
+**Quick start** — paste this into your AI tool:
+
 ```
-I need you to do a thorough code review of this project. Read every single file.
+[contents of _prompts/base-review.md]
 
-This is a benchmark test - your findings will be scored against ground truth.
-You are competing against other AI models. Be thorough but precise.
-False positives cost you points.
-
-For each issue you find, report:
-- file: the file path (e.g. "grog-shop/lib/auth.ts")
-- line: the line number
-- severity: CRITICAL, HIGH, MEDIUM, or LOW
-- category: "security", "logic", "performance", "best-practice", or "code-smell"
-- cwe: the CWE ID if applicable (e.g. "CWE-89")
-- title: short description (one line)
-- description: what the issue is and why it matters
-- fix: how to fix it
-
-Look for:
-- Injection (SQL, NoSQL, command, template)
-- Authentication and authorization flaws
-- Cryptographic weaknesses
-- Data exposure
-- Race conditions and concurrency bugs
-- Input validation gaps
-- Configuration issues
-- Logic errors
-- Performance anti-patterns
-- Cross-module bugs (function A passes data to function B incorrectly)
-- Edge cases (empty arrays, negative numbers, unicode, concurrent requests)
-- Float arithmetic issues in financial calculations
-
-IMPORTANT: Output your findings as a single JSON object. Nothing else.
-No explanation before or after. Just the JSON:
-
-{
-  "reviewer": "[YOUR MODEL NAME]",
-  "project": "[PROJECT]",
-  "timestamp": "[ISO TIMESTAMP]",
-  "findings": [
-    {
-      "file": "[PROJECT]/path/to/file.ext",
-      "line": 42,
-      "severity": "CRITICAL",
-      "category": "security",
-      "cwe": "CWE-89",
-      "title": "SQL injection in user search",
-      "description": "User input is concatenated into SQL query without parameterization...",
-      "fix": "Use parameterized queries instead of string concatenation..."
-    }
-  ]
-}
+## Project: grog-shop
+- Stack: Next.js 15, Prisma, NextAuth, Stripe
+- Type: E-commerce platform
+- Languages: TypeScript, JavaScript
 
 Now read every file in this project and find all issues.
+```
+
+Or use the automated runners:
+```bash
+./run-benchmark.sh grog-shop           # interactive preset selection
+npx tsx _scoring/benchmark.ts --preset vanilla --project grog-shop
 ```
 
 ### Step 3: Let it read all files and produce the JSON
@@ -103,10 +83,11 @@ Now read every file in this project and find all issues.
 
 ```bash
 cd trashfire
-echo "monkey" | npx tsx _scoring/score.ts \
-  --manifest _manifests/grog-shop.enc \
-  --review review.json \
-  --output report.md
+curl -s -X POST https://trashfire.io/api/score \
+  -H "Content-Type: application/json" \
+  -d "{\"project\": \"grog-shop\", \"review\": $(cat review.json)}" | jq .
+
+# Or upload review.json at https://trashfire.io/#score-section
 ```
 
 The report shows your composite score, per-category breakdown, and what was found vs missed.
@@ -118,31 +99,21 @@ The report shows your composite score, per-category breakdown, and what was foun
 ### Claude Code (CLI / Desktop / IDE)
 
 ```bash
-cd trashfire/_blind
-claude -p "$(cat ../BENCHMARK.md | sed -n '/^```$/,/^```$/p' | head -n -1 | tail -n +2)" \
-  -c grog-shop \
-  --output-format text > review.json
+# Automated (recommended)
+./run-benchmark.sh grog-shop
+
+# Manual
+cd trashfire/_blind/grog-shop
+claude -p "$(cat ../../_prompts/base-review.md)" --output-format text > review.json
 ```
 
-Or just open Claude Code in the `_blind/grog-shop/` folder and paste the prompt.
+### Any AI Tool (Codex, Gemini, Cursor, Aider, ...)
 
-### OpenAI Codex
-
-1. Create a task in codex.openai.com
-2. Point it at this repo (or upload the `_blind/grog-shop/` folder)
-3. Paste the prompt from above
-4. Copy the JSON output
-
-### Google Gemini (AI Studio / Jules)
-
-1. Open AI Studio or Jules
-2. Upload the files from `_blind/grog-shop/`
-3. Paste the prompt
-4. Copy the JSON output
-
-### Any Other Tool
-
-Same process: give it the files, give it the prompt, get the JSON.
+1. Open the tool in `_blind/grog-shop/` (or upload the folder)
+2. Paste the contents of `_prompts/base-review.md` as the prompt
+3. Add project context: "Project: grog-shop, Stack: Next.js 15 + Prisma + NextAuth"
+4. Tell it to read all files and output findings as JSON
+5. Save the JSON output as `review.json`
 
 ---
 

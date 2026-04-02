@@ -9,6 +9,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { join, relative, extname } from "node:path";
+import { buildCanonicalHeader } from "../_prompts/project-context.js";
 
 const ROOT = join(import.meta.dirname ?? ".", "..");
 const BLIND = join(ROOT, "_blind");
@@ -62,11 +63,22 @@ const MODELS: ModelDef[] = [
   { id: "llama-3.1-8b", display: "Llama 3.1 8B", provider: "groq", apiModel: "llama-3.1-8b-instant" },
 ];
 
-// ── Presets ──
-const PRESETS: Record<string, string> = {
-  vanilla: "Review this codebase for any issues you can find. Check all the files.",
-  security: "You are an expert security reviewer. Review this codebase for security vulnerabilities. Check every file thoroughly for: SQL injection, XSS, auth bypass, RCE, SSRF, IDOR, CSRF, path traversal, command injection, deserialization, hardcoded secrets, weak crypto, and any other security issues.",
-  thorough: "Review all files as an experienced senior developer. Find: security bugs (SQLi, XSS, auth issues, injection, SSRF, IDOR), logic errors (race conditions, off-by-one, wrong comparisons, async problems), performance problems (N+1 queries, memory leaks, blocking calls), bad practices (hardcoded values, swallowed errors, missing validation, weak crypto), and tricky cross-function bugs. Think about edge cases: empty arrays, negative numbers, concurrent requests, float arithmetic for money.",
+// ── Presets (Layer 2 additions — appended to base prompt) ──
+// Every run gets Layer 0 (base-review.md) + Layer 1 (project context).
+// Presets add Layer 2 methodology/focus text. Vanilla = empty.
+const LAYER2_PRESETS: Record<string, string> = {
+  vanilla: "",
+  security: `Focus extra attention on security vulnerabilities. For each file:
+- Map data flows from untrusted inputs to sensitive operations
+- Check authentication and authorization at every boundary
+- Look for injection vectors: SQL, command, template, deserialization
+- Verify cryptographic operations use strong algorithms and proper parameters
+- Check for hardcoded secrets, debug endpoints, and permissive CORS`,
+  thorough: `Think like an experienced senior developer who has seen production incidents.
+Pay special attention to edge cases: empty arrays, negative numbers, Unicode input,
+concurrent requests, float arithmetic for money, TOCTOU problems, missing permission
+checks, error paths that skip cleanup, and state transitions that can be triggered
+out of order.`,
 };
 
 // ── Collect project files ──
@@ -100,31 +112,22 @@ function collectFiles(dir: string): { path: string; content: string }[] {
 function buildPrompt(project: string, preset: string, files: { path: string; content: string }[]): string {
   const fileBlock = files.map(f => `=== ${f.path} ===\n${f.content}`).join("\n\n");
 
-  return `${PRESETS[preset] ?? preset}
+  // Layer 0 + Layer 1 (canonical header)
+  const canonicalHeader = buildCanonicalHeader(project);
+
+  // Layer 2 (preset addition, empty for vanilla)
+  const layer2 = LAYER2_PRESETS[preset] ?? preset;
+  const layer2Block = layer2.trim() ? `\n\n---\n\n## Additional Review Guidance\n\n${layer2.trim()}` : "";
+
+  return `${canonicalHeader}${layer2Block}
+
+---
 
 Here are all the files in the project:
 
 ${fileBlock}
 
-Now output your complete findings as a single JSON object. ONLY output valid JSON, nothing else:
-
-{
-  "reviewer": "model-name",
-  "project": "${project}",
-  "timestamp": "${new Date().toISOString()}",
-  "findings": [
-    {
-      "file": "${project}/path/to/file",
-      "line": 42,
-      "severity": "CRITICAL",
-      "category": "security",
-      "cwe": "CWE-89",
-      "title": "Short description",
-      "description": "Detailed explanation",
-      "fix": "How to fix"
-    }
-  ]
-}`;
+=== END OF FILES ===`;
 }
 
 // ── API Calls ──
@@ -249,7 +252,7 @@ async function main() {
   const project = get("--project") ?? "grog-shop";
   const preset = get("--preset") ?? "thorough";
   const modelFilter = get("--models") ?? "all";
-  const passphrase = get("--passphrase") ?? "monkey";
+  const passphrase = get("--passphrase") ?? process.env.TRASHFIRE_KEY ?? "";
 
   const keys = loadKeys();
 

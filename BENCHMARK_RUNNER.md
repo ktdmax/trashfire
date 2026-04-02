@@ -25,52 +25,88 @@ If the input changes, the result is not comparable. Do not improvise.
 
 ---
 
+## Prompt architecture — three layers
+
+Every benchmark prompt is composed from exactly three layers.
+Layer 0 and Layer 1 are identical across all runs for the same project.
+Layer 2 is the experimental variable — it is what the benchmark measures.
+
+```
+┌──────────────────────────────────────────────────────┐
+│ LAYER 0: Base Review Prompt  (always, identical)     │
+│ File: _prompts/base-review.md  (~500 tokens)         │
+│ Contains: JSON output schema, 6 categories,          │
+│ severity levels, behavioral rules                    │
+├──────────────────────────────────────────────────────┤
+│ LAYER 1: Project Context  (always, per-project)      │
+│ Source: _prompts/project-context.ts lookup table      │
+│ Contains: tech stack, app type, languages (~70 tok)  │
+├──────────────────────────────────────────────────────┤
+│ LAYER 2: Skill / Methodology  (VARIABLE)             │
+│ Vanilla run:  empty — no Layer 2                     │
+│ Skill run:    loaded Supaskills or local .md files   │
+│ Preset run:   short methodology addition             │
+└──────────────────────────────────────────────────────┘
+```
+
+| Layer | Contents | Varies between runs? | Fair? |
+|-------|----------|---------------------|-------|
+| 0 — Base | Output format, categories, severity, rules | Never | Yes — defines the scoring contract |
+| 1 — Context | Tech stack, app type, languages | Per project, not per run | Yes — real auditors receive a scope document |
+| 2 — Skill | Methodology, expertise, focus | **Yes — this is the benchmark variable** | N/A — this is what we measure |
+
+### What Layer 0 contains (and why it is NOT cheating)
+
+Layer 0 tells the reviewer:
+- The JSON output format the scorer expects (without this, findings cannot be scored)
+- The 6 issue categories: SEC, LOGIC, PERF, BP, SMELL, TRICKY (this is scope, not answers)
+- Severity definitions (CRITICAL / HIGH / MEDIUM / LOW)
+- Rules: report individually, be precise, trace cross-module flows
+
+It does NOT contain: bug counts, difficulty distribution, specific planted patterns, or manifest data.
+
+### What Layer 1 contains (and why it is NOT cheating)
+
+Layer 1 tells the reviewer:
+- The tech stack (e.g., "Next.js 15, Prisma, NextAuth, Stripe")
+- The application type (e.g., "E-commerce platform")
+- The languages used (e.g., "TypeScript, JavaScript")
+
+This is information any auditor can derive from `package.json` / `go.mod` / file extensions.
+It does NOT contain: focus areas (those hint at planted bug types) or any manifest data.
+
+---
+
 ## The canonical prompt
 
-The canonical prompt is the single text blob that every reviewer sees.
+The canonical prompt is Layer 0 + Layer 1 + source files.
 It is built once per project, deterministically, and never changes between runs.
 
 ### How to build it
 
-When asked to run a benchmark for a project, build the canonical prompt like this:
-
 ```
-1. Collect all source files from vaults/<project>/ recursively
-2. Sort them alphabetically by relative path
-3. Exclude: node_modules/, vendor/, __pycache__/, .git/, *.lock, *.sum, dist/, build/
-4. For each file: strip all inline comments matching // BUG-\w+: or # BUG-\w+:
+1. Load Layer 0: read _prompts/base-review.md verbatim
+2. Load Layer 1: call getProjectContext(project) from _prompts/project-context.ts
+3. Combine: Layer 0 + "\n\n" + Layer 1 + "\n\n---\n\n" + file delimiter notice
+4. Collect all source files from vaults/<project>/ recursively
+5. Sort them alphabetically by relative path
+6. Exclude: node_modules/, vendor/, __pycache__/, .git/, *.lock, *.sum, dist/, build/
+7. For each file: strip all inline comments matching // BUG-\w+: or # BUG-\w+:
    (these are the ground-truth markers — the reviewer must not see them)
-5. Concatenate in this format:
+8. Concatenate files in this format:
 
 === FILE: <relative/path/to/file.ext> ===
 <file contents with BUG comments stripped>
 
-6. Prepend the fixed review task header (see below)
-7. Save the result to _runs/<project>/canonical_prompt.txt
-8. Save SHA256 of the file to _runs/<project>/canonical_prompt.sha256
-   (used later to verify integrity of any submitted result)
+9. Save the result to _runs/<project>/canonical_prompt.txt
+10. Save SHA256 of the file to _runs/<project>/canonical_prompt.sha256
+    (used later to verify integrity of any submitted result)
 ```
 
-### Fixed review task header
+### Single source of truth
 
-Do not modify this header. Copy it verbatim.
-
-```
-You are performing a security and code quality review of the following codebase.
-
-Your task:
-- Identify every security vulnerability, bug, and code quality issue you can find
-- For each finding: state the file, the line or function, what the issue is,
-  why it is exploitable or problematic, and how to fix it
-- Report your severity assessment: CRITICAL / HIGH / MEDIUM / LOW
-- Report the CWE ID if applicable
-- Do not skip files
-- Do not summarise — report every individual finding separately
-
-The codebase follows below. Each file is delimited by === FILE: path ===
-
----
-```
+Do not copy the base prompt inline. Always read `_prompts/base-review.md` at build time.
+If the base prompt changes, regenerate canonical prompts and invalidate all prior runs.
 
 ---
 
@@ -78,7 +114,8 @@ The codebase follows below. Each file is delimited by === FILE: path ===
 
 ### Vanilla run
 
-No skill loaded. The reviewer gets only the canonical prompt with no additional system context.
+Layer 0 + Layer 1 only. No Layer 2 (no skills, no extra methodology).
+This is the baseline — it tests raw model capability with fair instructions.
 
 ```bash
 run benchmark vanilla --project <project-name>
@@ -94,7 +131,8 @@ What Claude Code does:
 
 ### Skill run
 
-One or more skills loaded as system context before the review prompt.
+Layer 0 + Layer 1 + Layer 2 (loaded skills as system context).
+The canonical prompt (Layer 0+1) is identical to vanilla — only Layer 2 differs.
 
 ```bash
 run benchmark --skill supaskills:<slug> --project <project-name>

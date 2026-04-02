@@ -18,6 +18,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join, relative, extname } from "node:path";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
+import { buildCanonicalHeader } from "../_prompts/project-context.js";
 
 const ROOT = join(import.meta.dirname ?? ".", "..");
 const BLIND = join(ROOT, "_blind");
@@ -68,12 +69,23 @@ const ALL_MODELS: Model[] = [
   { id: "llama-3.3-70b", name: "Llama 3.3 70B (Groq)", provider: "groq", api: "llama-3.3-70b-versatile", contextTokens: 32000 },
 ];
 
-// ─── Presets ─────────────────────────────────────────────────────────────────
+// ─── Presets (Layer 2 additions — appended to base prompt) ──────────────────
+// Every run gets Layer 0 (base-review.md) + Layer 1 (project context).
+// Presets add Layer 2 methodology/focus text. Vanilla = empty.
 
-const PRESETS: Record<string, string> = {
-  vanilla: "Review this codebase for any issues you can find. Check all the files.",
-  security: "You are an expert security reviewer. Review this codebase for security vulnerabilities. Check every file thoroughly for: SQL injection, XSS, auth bypass, RCE, SSRF, IDOR, CSRF, path traversal, command injection, deserialization, hardcoded secrets, weak crypto, and any other security issues.",
-  thorough: "Review all files as an experienced senior developer. Find: security bugs (SQLi, XSS, auth issues, injection, SSRF, IDOR), logic errors (race conditions, off-by-one, wrong comparisons, async problems), performance problems (N+1 queries, memory leaks, blocking calls), bad practices (hardcoded values, swallowed errors, missing validation, weak crypto), and tricky cross-function bugs. Think about edge cases: empty arrays, negative numbers, concurrent requests, float arithmetic for money.",
+const LAYER2_PRESETS: Record<string, string> = {
+  vanilla: "",
+  security: `Focus extra attention on security vulnerabilities. For each file:
+- Map data flows from untrusted inputs to sensitive operations
+- Check authentication and authorization at every boundary
+- Look for injection vectors: SQL, command, template, deserialization
+- Verify cryptographic operations use strong algorithms and proper parameters
+- Check for hardcoded secrets, debug endpoints, and permissive CORS`,
+  thorough: `Think like an experienced senior developer who has seen production incidents.
+Pay special attention to edge cases: empty arrays, negative numbers, Unicode input,
+concurrent requests, float arithmetic for money, TOCTOU problems, missing permission
+checks, error paths that skip cleanup, and state transitions that can be triggered
+out of order.`,
 };
 
 // ─── Collect files ───────────────────────────────────────────────────────────
@@ -109,31 +121,22 @@ interface FrozenInput {
 function buildFrozenInput(project: string, preset: string, files: { path: string; content: string }[]): FrozenInput {
   const fileBlock = files.map(f => `=== FILE: ${f.path} ===\n${f.content}`).join("\n\n");
 
-  const prompt = `${PRESETS[preset] ?? preset}
+  // Layer 0 + Layer 1 (canonical header)
+  const canonicalHeader = buildCanonicalHeader(project);
+
+  // Layer 2 (preset addition, empty for vanilla)
+  const layer2 = LAYER2_PRESETS[preset] ?? preset;
+  const layer2Block = layer2.trim() ? `\n\n---\n\n## Additional Review Guidance\n\n${layer2.trim()}` : "";
+
+  const prompt = `${canonicalHeader}${layer2Block}
+
+---
 
 Here are all the source files in the "${project}" project:
 
 ${fileBlock}
 
-=== END OF FILES ===
-
-Now analyze every file above and output your complete findings as a SINGLE JSON object.
-Output ONLY valid JSON, no markdown fences, no explanation before or after:
-
-{
-  "findings": [
-    {
-      "file": "${project}/path/to/file",
-      "line": 42,
-      "severity": "CRITICAL",
-      "category": "security",
-      "cwe": "CWE-89",
-      "title": "Short description",
-      "description": "Detailed explanation of the vulnerability and its impact",
-      "fix": "How to fix this issue"
-    }
-  ]
-}`;
+=== END OF FILES ===`;
 
   const hash = createHash("sha256").update(prompt).digest("hex");
   const approxTokens = Math.ceil(prompt.length / 3.5); // rough estimate
@@ -267,7 +270,7 @@ async function main() {
   const project = get("--project") ?? "grog-shop";
   const preset = get("--preset") ?? "thorough";
   const modelFilter = get("--models") ?? "all";
-  const passphrase = get("--passphrase") ?? "monkey";
+  const passphrase = get("--passphrase") ?? process.env.TRASHFIRE_KEY ?? "";
 
   const keys = loadKeys();
 

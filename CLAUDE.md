@@ -13,22 +13,19 @@ The goal is to benchmark AI code review skills by scoring how many issues a revi
 ## Commands
 
 ```bash
-# Score a review against encrypted ground truth
-npx tsx _scoring/score.ts --manifest _manifests/<project>.enc --review review-output.json
+# Score a review via API (no local manifests needed)
+curl -s -X POST https://trashfire.io/api/score \
+  -H "Content-Type: application/json" \
+  -d '{"project": "<project>", "review": <review-json>}' | jq .
 
-# Encrypt a plaintext manifest
-npx tsx _scoring/crypto.ts encrypt --file _manifests/<project>.json
-
-# Decrypt a manifest (to stdout, never to disk in production)
-npx tsx _scoring/crypto.ts decrypt --file _manifests/<project>.enc
+# Or upload at https://trashfire.io/#score-section
 
 # Strip BUG markers for blind testing
 bash _scoring/strip-markers.sh <project-dir>
 bash _scoring/strip-markers.sh <project-dir> --dry-run
 
-# Run a benchmark: review with a skill vs. vanilla
-claude --skill security-code-reviewer "Review this codebase for security vulnerabilities. Check every file."
-claude "Review this codebase for security vulnerabilities. Check every file."
+# Run a benchmark
+./run-benchmark.sh <project>
 ```
 
 Per-project commands depend on the framework (see tech stack table below).
@@ -37,12 +34,18 @@ Per-project commands depend on the framework (see tech stack table below).
 
 ```
 trashfire/
-  vaults/            # 42 vulnerable mini-apps (see tech stack below)
+  vaults/              # 42 vulnerable mini-apps (see tech stack below)
   _manifests/          # Encrypted ground truth (.enc files, AES-256-GCM)
+  _prompts/            # Canonical prompt layers (single source of truth)
+    base-review.md     # Layer 0: output format, categories, severity, rules
+    project-context.ts # Layer 1: per-project tech stack lookup + prompt builder
   _scoring/            # TypeScript scoring engine, crypto module, strip script
     types.ts           # All TypeScript interfaces and constants
     crypto.ts          # AES-256-GCM encrypt/decrypt with PBKDF2 key derivation
     score.ts           # Composite scoring engine with per-category sub-scores
+    benchmark.ts       # Single-model benchmark runner (uses 3-layer prompts)
+    fair-bench.ts      # Fair multi-model comparison runner
+    multi-bench.ts     # Multi-provider benchmark runner
     strip-markers.sh   # Removes // BUG-XXXX: comments for blind testing
   _md/                 # Research documents and reports
 ```
@@ -224,11 +227,12 @@ CompositeScore = (
 Penalties: -1.0 per false positive, -2.0 per flagged red herring
 ```
 
-### Encrypted Solutions (Anti-Cheating)
+### Anti-Cheating
 
 - Manifests encrypted with AES-256-GCM, PBKDF2-HMAC-SHA512 (600k iterations)
-- Binary format: `TFBM` magic + salt + IV + auth tag + ciphertext
-- Passphrase provided at scoring time only (never in repo)
+- **Passphrase is NOT in the repo** — stored only in Vercel env var `TRASHFIRE_KEY`
+- Plaintext manifests are NOT in the repo — only `.enc` files
+- Scoring happens server-side via `trashfire.io/api/score` — reviewers never see ground truth
 - `// BUG-XXXX:` comments stripped for blind testing
 - Snippet hashes in manifest for tamper detection
 
@@ -237,23 +241,30 @@ Penalties: -1.0 per false positive, -2.0 per flagged red herring
 Before running any benchmark, read `BENCHMARK_RUNNER.md` in full.
 That file defines the protocol. This section is just the entry point.
 
+### Prompt Architecture (3 Layers)
+
+Every benchmark uses a 3-layer prompt system:
+
+| Layer | Source | Contents | Varies? |
+|-------|--------|----------|---------|
+| **0 — Base** | `_prompts/base-review.md` | JSON output format, 6 categories, severity, rules | Never |
+| **1 — Context** | `_prompts/project-context.ts` | Tech stack, app type, languages per project | Per project |
+| **2 — Skill** | Loaded at runtime | Methodology, expertise, skills | **Yes — the benchmark variable** |
+
 ### Running a test
 
 ```bash
-# Vanilla (no skill)
-run benchmark vanilla --project grog-shop
+# Vanilla (Layer 0+1 only, no skill)
+./run-benchmark.sh grog-shop
 
-# With one Supaskills skill
-run benchmark --skill supaskills:security-code-reviewer --project grog-shop
+# With preset
+npx tsx _scoring/benchmark.ts --preset thorough --project grog-shop
 
-# With a local skill file
-run benchmark --skill ./my-skill.md --project grog-shop
+# With Supaskills skill (Layer 2)
+npx tsx _scoring/benchmark.ts --preset supaskills-single --project grog-shop
 
-# With multiple skills combined
-run benchmark --skills supaskills:security-code-reviewer,supaskills:vuln-hunter --project grog-shop
-
-# All projects, vanilla
-run benchmark --all
+# Fair multi-model comparison
+npx tsx _scoring/fair-bench.ts --project grog-shop --preset vanilla
 
 # Compare all runs for a project
 compare runs --project grog-shop
@@ -264,13 +275,13 @@ submit result --run <run-id> --project grog-shop
 
 ### Fair play rules (enforced always)
 
-1. Every run for the same project uses the same canonical prompt - built once,
-   stored in `_runs/<project>/canonical_prompt.txt`, never modified between runs.
+1. Every run for the same project uses the same Layer 0 + Layer 1 prompt (canonical header).
+   Layer 2 is the only variable.
 2. BUG-XXX marker comments are stripped from source before the prompt is built.
    The reviewer never sees them.
 3. Manifests in `_manifests/` are never read during the review phase.
 4. Skills are loaded verbatim - not summarised, not modified.
-5. Vanilla runs have zero system context additions.
+5. Vanilla runs have no Layer 2 (no system context additions).
 6. A run that violated any of these rules cannot be submitted to the leaderboard.
 
 ## MCP Integration

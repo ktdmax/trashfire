@@ -39,23 +39,52 @@ function normalizeSeverity(raw: string): IssueSeverity | null {
 // ─── Category Normalization ──────────────────────────────────────────────────
 
 const CATEGORY_MAP: Record<string, IssueCategory> = {
+  // Security
   security: "SEC",
   sec: "SEC",
   vulnerability: "SEC",
   vuln: "SEC",
+  injection: "SEC",
+  auth: "SEC",
+  authentication: "SEC",
+  authorization: "SEC",
+  crypto: "SEC",
+  cryptography: "SEC",
+  // Logic
   logic: "LOGIC",
   bug: "LOGIC",
+  "logic bug": "LOGIC",
+  "logic error": "LOGIC",
+  correctness: "LOGIC",
+  // Performance
   performance: "PERF",
   perf: "PERF",
+  "performance issue": "PERF",
+  // Best Practice
   "best practice": "BP",
   "best-practice": "BP",
   bp: "BP",
   practice: "BP",
+  "best practices": "BP",
+  hardening: "BP",
+  configuration: "BP",
+  config: "BP",
+  // Code Smell
   smell: "SMELL",
   "code smell": "SMELL",
+  "code-smell": "SMELL",
   maintainability: "SMELL",
+  quality: "SMELL",
+  "code quality": "SMELL",
+  // Tricky / Cross-Module
   tricky: "TRICKY",
   "cross-module": "TRICKY",
+  "cross-cutting": "TRICKY",
+  subtle: "TRICKY",
+  "race condition": "TRICKY",
+  race: "TRICKY",
+  toctou: "TRICKY",
+  "cross-file": "TRICKY",
 };
 
 function normalizeCategory(raw: string): IssueCategory | null {

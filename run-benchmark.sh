@@ -22,7 +22,7 @@ BLIND="$ROOT/_blind"
 MANIFESTS="$ROOT/_manifests"
 SCORING="$ROOT/_scoring"
 RESULTS="$ROOT/_results"
-PASSPHRASE="${TRASHFIRE_KEY:-monkey}"
+PASSPHRASE="${TRASHFIRE_KEY:?Set TRASHFIRE_KEY env var for local scoring, or use https://trashfire.io/api/score}"
 
 # Colors
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
@@ -51,29 +51,37 @@ fi
 
 echo -e "  ${GREEN}Project:${NC} $PROJECT"
 
-# ── Pick prompt ──
+# ── Load base prompt (Layer 0) ──
+BASE_PROMPT_FILE="$ROOT/_prompts/base-review.md"
+if [ ! -f "$BASE_PROMPT_FILE" ]; then
+  echo -e "  ${RED}Error: Base prompt not found at $BASE_PROMPT_FILE${NC}"
+  exit 1
+fi
+BASE_PROMPT=$(cat "$BASE_PROMPT_FILE")
+
+# ── Pick preset (Layer 2 addition) ──
 if [ -n "${2:-}" ]; then
-  PROMPT="$2"
+  LAYER2="$2"
+  PRESET="custom"
 else
   echo ""
-  echo -e "  ${CYAN}Prompt presets:${NC}"
-  echo "    1) vanilla    - 'Review this code for issues' (no guidance)"
-  echo "    2) security   - Security vulnerabilities only"
-  echo "    3) thorough   - All categories: security, logic, perf, best practices"
-  echo "    4) custom     - Type your own prompt"
+  echo -e "  ${CYAN}Prompt presets (Layer 2 — added on top of base prompt):${NC}"
+  echo "    1) vanilla    - Base prompt only (no extra guidance)"
+  echo "    2) security   - Extra focus on security methodology"
+  echo "    3) thorough   - Extra focus on edge cases and cross-module bugs"
+  echo "    4) custom     - Type your own addition"
   echo ""
   read -p "  Pick a preset (1-4, default: 1): " PRESET_CHOICE
   PRESET_CHOICE="${PRESET_CHOICE:-1}"
 
   case "$PRESET_CHOICE" in
-    1) PROMPT="Review this codebase for any issues you can find. Check all the files." ; PRESET="vanilla" ;;
-    2) PROMPT="You are an expert security reviewer. Review this codebase for security vulnerabilities. Check every file thoroughly for: SQL injection, XSS, auth bypass, RCE, SSRF, IDOR, CSRF, path traversal, command injection, deserialization, hardcoded secrets, weak crypto, and any other security issues." ; PRESET="security" ;;
-    3) PROMPT="Review all files as an experienced senior developer. Find: security bugs (SQLi, XSS, auth issues, injection, SSRF, IDOR), logic errors (race conditions, off-by-one, wrong comparisons, async problems), performance problems (N+1 queries, memory leaks, blocking calls), bad practices (hardcoded values, swallowed errors, missing validation, weak crypto), and tricky cross-function bugs. Think about edge cases: empty arrays, negative numbers, concurrent requests, float arithmetic for money." ; PRESET="thorough" ;;
-    4) read -p "  Enter your prompt: " PROMPT ; PRESET="custom" ;;
-    *) PROMPT="Review this codebase for any issues you can find. Check all the files." ; PRESET="vanilla" ;;
+    1) LAYER2="" ; PRESET="vanilla" ;;
+    2) LAYER2="Focus extra attention on security vulnerabilities. For each file: map data flows from untrusted inputs to sensitive operations, check authentication and authorization at every boundary, look for injection vectors (SQL, command, template, deserialization), verify cryptographic operations, check for hardcoded secrets and permissive CORS." ; PRESET="security" ;;
+    3) LAYER2="Think like an experienced senior developer who has seen production incidents. Pay special attention to edge cases: empty arrays, negative numbers, Unicode input, concurrent requests, float arithmetic for money, TOCTOU problems, missing permission checks, error paths that skip cleanup, and state transitions that can be triggered out of order." ; PRESET="thorough" ;;
+    4) read -p "  Enter your Layer 2 addition: " LAYER2 ; PRESET="custom" ;;
+    *) LAYER2="" ; PRESET="vanilla" ;;
   esac
 fi
-PRESET="${PRESET:-custom}"
 
 echo -e "  ${GREEN}Preset:${NC}  $PRESET"
 
@@ -86,31 +94,26 @@ REVIEW_FILE="$RUN_DIR/${PROJECT}-review.json"
 
 echo ""
 echo -e "  ${YELLOW}Step 1/3: Running review...${NC}"
-echo -e "  This takes 2-5 minutes depending on project size."
+echo -e "  This takes 5-15 minutes depending on project size."
 echo ""
 
-# ── Run the review via Claude ──
-REVIEW_PROMPT="$PROMPT
+# ── Compose review prompt (Layer 0 + Layer 2) ──
+# Note: Layer 1 (project context) is embedded in the base prompt via project-context.ts
+# For the shell script, we inline minimal project context
+REVIEW_PROMPT="$BASE_PROMPT
 
-After reviewing ALL files, output your complete findings as a single JSON object in this EXACT format. Write ONLY valid JSON, no other text:
+## Project: $PROJECT"
 
-{
-  \"reviewer\": \"claude-opus-4-6\",
-  \"project\": \"$PROJECT\",
-  \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
-  \"findings\": [
-    {
-      \"file\": \"$PROJECT/path/to/file.ext\",
-      \"line\": 42,
-      \"severity\": \"CRITICAL\",
-      \"category\": \"security\",
-      \"cwe\": \"CWE-89\",
-      \"title\": \"Short description of the issue\",
-      \"description\": \"Detailed explanation of what is wrong and why it matters\",
-      \"fix\": \"How to fix this issue\"
-    }
-  ]
-}"
+# Append Layer 2 if present
+if [ -n "$LAYER2" ]; then
+  REVIEW_PROMPT="$REVIEW_PROMPT
+
+---
+
+## Additional Review Guidance
+
+$LAYER2"
+fi
 
 # Run claude and capture output
 claude -p "$REVIEW_PROMPT" --output-format text -c "$BLIND/$PROJECT" 2>/dev/null | tee "$RUN_DIR/raw-output.txt" | grep -v "^$" > /dev/null

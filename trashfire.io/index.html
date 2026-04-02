@@ -202,7 +202,7 @@
     <div style="background:var(--s);border:1px solid var(--b);border-radius:10px;padding:1.25rem">
       <div style="font-family:'Press Start 2P',monospace;font-size:.6rem;color:var(--o);margin-bottom:.5rem">STEP 3 - SCORE</div>
       <div style="font-family:monospace;font-size:.82rem;color:var(--m);line-height:1.8">
-        <span style="color:var(--g)">$</span> echo "monkey" | npx tsx _scoring/score.ts \<br>
+        <span style="color:var(--g)">$</span> curl -s -X POST trashfire.io/api/score -d '{"project":"grog-shop","review":...}' \<br>
         &nbsp;&nbsp;--manifest _manifests/grog-shop.enc \<br>
         &nbsp;&nbsp;--review review.json --output report.md
       </div>
@@ -300,6 +300,49 @@
   </div>
 </section>
 
+<section id="score-section">
+  <h2>Score Your Review</h2>
+  <p class="sub">Upload your review.json to score it against encrypted ground truth.</p>
+  <div style="background:var(--s);border:1px solid var(--b);border-radius:12px;padding:2rem;max-width:720px">
+    <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <label style="display:block;font-size:.85rem;color:var(--m);margin-bottom:.4rem">Project</label>
+        <select id="score-project" style="width:100%;padding:.6rem;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:8px;font-size:.9rem"></select>
+      </div>
+    </div>
+    <div id="drop-zone" style="border:2px dashed var(--b);border-radius:12px;padding:2.5rem 1.5rem;text-align:center;cursor:pointer;transition:all .2s">
+      <div style="font-size:1.8rem;margin-bottom:.5rem">📄</div>
+      <div style="font-size:.95rem;margin-bottom:.3rem">Drop <code>review.json</code> here or click to browse</div>
+      <div style="font-size:.8rem;color:var(--m)">JSON with { findings: [...] }</div>
+      <input type="file" id="file-input" accept=".json" style="display:none">
+    </div>
+    <div id="score-status" style="margin-top:1rem;font-size:.85rem;color:var(--m);display:none"></div>
+    <div id="score-result" style="margin-top:1.5rem;display:none">
+      <div id="score-headline" style="font-size:1.8rem;font-weight:800;color:var(--o);margin-bottom:.5rem"></div>
+      <div id="score-summary" style="font-size:.9rem;color:var(--m);margin-bottom:1rem"></div>
+      <table id="score-table" style="width:100%;border-collapse:collapse;font-size:.85rem">
+        <thead><tr style="border-bottom:1px solid var(--b)">
+          <th style="text-align:left;padding:.5rem;color:var(--m)">Category</th>
+          <th style="text-align:right;padding:.5rem;color:var(--m)">Precision</th>
+          <th style="text-align:right;padding:.5rem;color:var(--m)">Recall</th>
+          <th style="text-align:right;padding:.5rem;color:var(--m)">F1</th>
+          <th style="text-align:right;padding:.5rem;color:var(--m)">Score</th>
+        </tr></thead>
+        <tbody id="score-tbody"></tbody>
+      </table>
+      <table id="tier-table" style="width:100%;border-collapse:collapse;font-size:.85rem;margin-top:1rem">
+        <thead><tr style="border-bottom:1px solid var(--b)">
+          <th style="text-align:left;padding:.5rem;color:var(--m)">Tier</th>
+          <th style="text-align:right;padding:.5rem;color:var(--m)">Found</th>
+          <th style="text-align:right;padding:.5rem;color:var(--m)">Total</th>
+          <th style="text-align:right;padding:.5rem;color:var(--m)">Recall</th>
+        </tr></thead>
+        <tbody id="tier-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div class="warn"><strong>Disclaimer:</strong> All code is AI-generated (Claude) and intentionally vulnerable. Do not use in production.</div>
   <a href="https://github.com/ktdmax/trashfire">GitHub</a> &middot; MIT License &middot; Made with 🔥 by AI
@@ -379,17 +422,16 @@ function setTier(t){
     b.style.borderColor=isOn?'var(--o)':'var(--b)';
   });
   const info=document.getElementById('tier-info');
-  if(t==='quick') info.textContent='3 vaults (Next.js + Python + C), ~3 hours, standard benchmark';
-  else if(t==='single') info.textContent='1 vault, ~1 hour, focused test';
-  else info.textContent='All 42 vaults, ~42 hours, ultimate benchmark. You will be honored.';
+  if(t==='quick') info.textContent='3 vaults (Next.js + Python + C), ~10-30 min, standard benchmark';
+  else if(t==='single') info.textContent='1 vault, ~5-15 min, focused test';
+  else info.textContent='All 42 vaults, ~3-8 hours, ultimate benchmark. You will be honored.';
   updatePrompt();
 }
 
 function updatePrompt(){
   const v=document.getElementById('vault-select').value;
-  const base='Find all security vulnerabilities, logic bugs, performance issues, and tricky cross-module bugs. For each finding report: file, line, severity, category, cwe, title, description, fix.';
-  const pre='Clone https://github.com/ktdmax/trashfire.git - read BENCHMARK_RUNNER.md for the full rules. Run: cd _scoring && npm install && cd .. && bash _scoring/create-blind-copy.sh. IMPORTANT: Do not grep for BUG markers. Do not skim. ';
-  const post=' Read each file individually from top to bottom. Look for security, logic, performance, and code quality issues. Take your time. Be thorough. Score each result against its manifest in _manifests/ (passphrase: monkey). Show the report.';
+  const pre='Clone https://github.com/ktdmax/trashfire.git - read BENCHMARK_RUNNER.md for the full rules. Run: cd _scoring && npm install && cd .. && bash _scoring/create-blind-copy.sh. IMPORTANT: Do not grep for BUG markers. The review prompt is in _prompts/base-review.md (defines JSON output format, 6 categories: SEC/LOGIC/PERF/BP/SMELL/TRICKY, severity levels, and rules). Use it as Layer 0. ';
+  const post=' Read each file individually from top to bottom. Cover ALL categories: security, logic, performance, best practices, code smells, and tricky cross-module bugs. Report each finding separately as JSON. Upload results at trashfire.io/#score-section to score against ground truth.';
   if(currentTier==='quick'){
     document.getElementById('prompt-box').textContent=`${pre}Review these 3 vaults one by one: _blind/grog-shop/, _blind/tentacle-labs/, _blind/lechuck-crypt/.${post}`;
   } else if(currentTier==='ultimate'){
@@ -403,6 +445,70 @@ function copyPrompt(){
   navigator.clipboard.writeText(document.getElementById('prompt-box').textContent);
   const b=document.getElementById('copy-btn');b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1500);
 }
+
+// ── Scoring UI ──
+(function(){
+  const projects=P.map(([n])=>n).sort();
+  const sel=document.getElementById('score-project');
+  projects.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o);});
+
+  const dropZone=document.getElementById('drop-zone');
+  const fileInput=document.getElementById('file-input');
+  const status=document.getElementById('score-status');
+  const result=document.getElementById('score-result');
+
+  dropZone.addEventListener('click',()=>fileInput.click());
+  dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.style.borderColor='var(--o)';dropZone.style.background='rgba(249,115,22,0.05)';});
+  dropZone.addEventListener('dragleave',()=>{dropZone.style.borderColor='var(--b)';dropZone.style.background='';});
+  dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.style.borderColor='var(--b)';dropZone.style.background='';if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});
+  fileInput.addEventListener('change',()=>{if(fileInput.files[0])processFile(fileInput.files[0]);});
+
+  function show(el,msg,color){el.style.display='block';el.style.color=color||'var(--m)';el.textContent=msg;}
+
+  async function processFile(file){
+    result.style.display='none';
+    show(status,'Reading file...','var(--m)');
+    try{
+      const text=await file.text();
+      let review;
+      try{review=JSON.parse(text);}catch{show(status,'Invalid JSON file.','var(--r)');return;}
+      if(!review.findings&&Array.isArray(review)){review={findings:review};}
+      if(!review.findings||!Array.isArray(review.findings)){show(status,'JSON must have a "findings" array.','var(--r)');return;}
+      show(status,`Scoring ${review.findings.length} findings against ${sel.value}...`,'var(--o)');
+      const resp=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({project:sel.value,review})});
+      if(!resp.ok){const e=await resp.json().catch(()=>({error:'Request failed'}));show(status,e.error||`Error ${resp.status}`,'var(--r)');return;}
+      const report=await resp.json();
+      renderReport(report);
+      status.style.display='none';
+    }catch(err){show(status,'Error: '+err.message,'var(--r)');}
+  }
+
+  function pct(n){return(n*100).toFixed(1)+'%';}
+
+  function renderReport(r){
+    result.style.display='block';
+    document.getElementById('score-headline').textContent=pct(r.composite_score);
+    document.getElementById('score-summary').textContent=
+      `${r.matched_issues}/${r.total_issues} found | ${r.missed_issues} missed | ${r.false_positives} FP | ${r.red_herrings_flagged} red herrings flagged`;
+    const cats=['SEC','LOGIC','PERF','BP','SMELL','TRICKY'];
+    const tbody=document.getElementById('score-tbody');
+    tbody.innerHTML=cats.map(c=>{const d=r.by_category[c]||{};return`<tr style="border-bottom:1px solid var(--s2)">
+      <td style="padding:.4rem .5rem;font-weight:600">${c}</td>
+      <td style="text-align:right;padding:.4rem .5rem">${pct(d.precision||0)}</td>
+      <td style="text-align:right;padding:.4rem .5rem">${pct(d.recall||0)}</td>
+      <td style="text-align:right;padding:.4rem .5rem">${pct(d.f1||0)}</td>
+      <td style="text-align:right;padding:.4rem .5rem;color:var(--o);font-weight:600">${pct(d.normalized_score||0)}</td>
+    </tr>`;}).join('');
+    const ttbody=document.getElementById('tier-tbody');
+    const tierNames=['Obvious','Standard','Moderate','Hard','Expert'];
+    ttbody.innerHTML=[1,2,3,4,5].map(t=>{const d=r.by_difficulty_tier[t]||{};return`<tr style="border-bottom:1px solid var(--s2)">
+      <td style="padding:.4rem .5rem">${t} (${tierNames[t-1]})</td>
+      <td style="text-align:right;padding:.4rem .5rem">${d.matched||0}</td>
+      <td style="text-align:right;padding:.4rem .5rem">${d.count||0}</td>
+      <td style="text-align:right;padding:.4rem .5rem">${pct(d.recall||0)}</td>
+    </tr>`;}).join('');
+  }
+})();
 </script>
 </body>
 </html>

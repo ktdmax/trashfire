@@ -13,10 +13,22 @@ Your job: read code, find bugs. Not test websites, not run scripts.
 
 ## What to do
 
-1. Read every file in `vaults/grog-shop/` (or whichever vault you're told to review)
-2. Find all bugs by actually understanding the code: security, logic, performance, best practices, tricky cross-module issues
-3. For each finding report: file, line, severity, category, cwe, title, description, fix
-4. Save findings as JSON to `review.json`
+1. Read the review prompt from `_prompts/base-review.md` — it defines the output format, all 6 categories, and the rules
+2. Read every file in `_blind/grog-shop/` (or whichever vault you're told to review)
+3. Find all bugs across ALL categories: SEC, LOGIC, PERF, BP, SMELL, TRICKY
+4. For each finding report: file, line, severity, category, cwe, title, description, fix
+5. Save findings as JSON to `review.json`
+
+## Categories (cover ALL of these)
+
+| Tag | What to find |
+|-----|-------------|
+| SEC | Injection, auth bypass, XSS, SSRF, IDOR, RCE, weak crypto, hardcoded secrets |
+| LOGIC | Off-by-one, wrong operator, null paths, state machine errors, async bugs |
+| PERF | N+1 queries, memory leaks, blocking I/O, ReDoS, unbounded allocations |
+| BP | Hardcoded config, swallowed exceptions, deprecated APIs, insecure defaults |
+| SMELL | Dead code, duplication, god functions, magic numbers |
+| TRICKY | Multi-file bug chains, race conditions, type coercion, config drift, serialization bugs |
 
 ## JSON format
 
@@ -29,7 +41,7 @@ Your job: read code, find bugs. Not test websites, not run scripts.
       "file": "grog-shop/lib/auth.ts",
       "line": 42,
       "severity": "CRITICAL",
-      "category": "security",
+      "category": "SEC",
       "cwe": "CWE-89",
       "title": "SQL injection in user search",
       "description": "User input concatenated into raw SQL query...",
@@ -44,12 +56,17 @@ Your job: read code, find bugs. Not test websites, not run scripts.
 - Do NOT write tests for the website
 - Do NOT run scripts or spawn subprocesses to do the review
 - Do NOT read _manifests/ (that's the answer key)
+- Do NOT grep for BUG- or RH- markers (that's cheating)
 - YOU read the code. YOU find the bugs. That's the test.
 
 ## Score your result
 
+Upload your `review.json` at [trashfire.io/#score-section](https://trashfire.io/#score-section), or:
+
 ```
-echo "monkey" | npx tsx _scoring/score.ts --manifest _manifests/grog-shop.enc --review review.json --output report.md
+curl -s -X POST https://trashfire.io/api/score \
+  -H "Content-Type: application/json" \
+  -d '{"project": "grog-shop", "review": <your-review-json>}' | jq .
 ```
 
 ## Full protocol
