@@ -191,10 +191,10 @@
         <span onclick="setTier('single')" class="tier-btn" style="padding:.2rem .6rem;border-radius:5px;font-size:.68rem;font-weight:600;cursor:pointer;border:1px solid var(--b);background:var(--s2);color:var(--m)">Focused (1 vault)</span>
         <span onclick="setTier('ultimate')" class="tier-btn" style="padding:.2rem .6rem;border-radius:5px;font-size:.68rem;font-weight:600;cursor:pointer;border:1px solid var(--b);background:var(--s2);color:var(--m)">Ultimate (42 vaults)</span>
       </div>
-      <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:8px;padding:1rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--t);white-space:pre-wrap" id="prompt-box">Clone https://github.com/ktdmax/trashfire.git - read BENCHMARK_RUNNER.md for the full rules. Run: cd _scoring && npm install && cd .. && bash _scoring/create-blind-copy.sh. IMPORTANT: Do not grep for BUG markers. Do not skim. Review these 3 vaults one by one: _blind/grog-shop/, _blind/tentacle-labs/, _blind/lechuck-crypt/. Read each file individually from top to bottom. Look for security, logic, performance, and code quality issues. Take your time. Be thorough. Score each result against its manifest in _manifests/ (passphrase: monkey). Show the report.</div>
+      <div style="position:relative;background:#0a0a0a;border:1px solid var(--b);border-radius:8px;padding:1rem;font-family:monospace;font-size:.82rem;line-height:1.7;color:var(--t);white-space:pre-wrap" id="prompt-box">Clone https://github.com/ktdmax/trashfire.git - read BENCHMARK_RUNNER.md for the full rules. Run: cd _scoring && npm install && cd .. && bash _scoring/create-blind-copy.sh. IMPORTANT: Do not grep for BUG markers. The review prompt is in _prompts/base-review.md (defines JSON output format, 6 categories: SEC/LOGIC/PERF/BP/SMELL/TRICKY, severity levels, and rules). Use it as Layer 0. Review these 3 vaults one by one: _blind/grog-shop/, _blind/tentacle-labs/, _blind/lechuck-crypt/. Read each file individually from top to bottom. Cover ALL categories: security, logic, performance, best practices, code smells, and tricky cross-module bugs. Report each finding separately as JSON. Upload results at trashfire.io/#score-section to score against ground truth.</div>
       <div style="display:flex;gap:.5rem;margin-top:.5rem;align-items:center">
         <button onclick="copyPrompt()" id="copy-btn" style="padding:.35rem .8rem;border-radius:5px;font-size:.72rem;font-weight:600;background:var(--o);color:#fff;border:none;cursor:pointer;font-family:monospace">Copy</button>
-        <span id="tier-info" style="font-size:.7rem;color:var(--m)">3 vaults, ~3 hours, standard benchmark</span>
+        <span id="tier-info" style="font-size:.7rem;color:var(--m)">3 vaults (Next.js + Python + C), ~10-30 min, standard benchmark</span>
       </div>
     </div>
 
@@ -202,11 +202,11 @@
     <div style="background:var(--s);border:1px solid var(--b);border-radius:10px;padding:1.25rem">
       <div style="font-family:'Press Start 2P',monospace;font-size:.6rem;color:var(--o);margin-bottom:.5rem">STEP 3 - SCORE</div>
       <div style="font-family:monospace;font-size:.82rem;color:var(--m);line-height:1.8">
-        <span style="color:var(--g)">$</span> curl -s -X POST trashfire.io/api/score -d '{"project":"grog-shop","review":...}' \<br>
-        &nbsp;&nbsp;--manifest _manifests/grog-shop.enc \<br>
-        &nbsp;&nbsp;--review review.json --output report.md
+        <span style="color:var(--g)">$</span> curl -s -X POST https://trashfire.io/api/score \<br>
+        &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+        &nbsp;&nbsp;-d '{"project":"grog-shop","review":...}' | jq .
       </div>
-      <p style="color:var(--m);font-size:.82rem;margin-top:.5rem">That's it. Open report.md for your score.</p>
+      <p style="color:var(--m);font-size:.82rem;margin-top:.5rem">That's it. Or drag-and-drop your review.json below.</p>
     </div>
 
   </div>
