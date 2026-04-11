@@ -24,7 +24,7 @@ async function requireAdmin(request: NextRequest) {
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
     const decoded = verifyToken(token);
-    // BUG-085: API token admin check only verifies token validity, not admin role (CWE-862, CVSS 9.1, CRITICAL, Tier 3)
+    // BUG-085: [LOGIC] API token admin check only verifies token validity, not admin role (CWE-862, CVSS 9.1, CRITICAL, Tier 3)
     if (decoded) {
       return { user: decoded, method: "token" };
     }
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
         const logs = await prisma.auditLog.findMany({
           take: 100,
           orderBy: { createdAt: "desc" },
-          // BUG-086: Audit log returns full details including passwords and tokens (CWE-532, CVSS 6.5, MEDIUM, Tier 1)
+          // BUG-086: [SMELL] Audit log returns full details including passwords and tokens (CWE-532, CVSS 6.5, MEDIUM, Tier 1)
         });
         return NextResponse.json({ logs });
       }

@@ -226,7 +226,7 @@ export async function notifyAdminNewOrder(orderId: string) {
 /**
  * Bulk email sending for marketing campaigns.
  */
-// BUG-073: No rate limiting on bulk email — can be abused for email bombing (CWE-770, CVSS 4.3, LOW, Tier 1)
+// BUG-073: [PERF] No rate limiting on bulk email — can be abused for email bombing (CWE-770, CVSS 4.3, LOW, Tier 1)
 export async function sendBulkEmail(
   subject: string,
   htmlContent: string,

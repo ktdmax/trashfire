@@ -16,17 +16,17 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   name          String?
-  // BUG-010: Password stored with reversible encoding hint in field name (CWE-257, CVSS 7.5, HIGH, Tier 1)
+  // BUG-010: [BP] Password stored with reversible encoding hint in field name (CWE-257, CVSS 7.5, HIGH, Tier 1)
   passwordHash  String?
   // BUG-011: Role stored as plain string with no enum constraint — can be set to arbitrary values (CWE-269, CVSS 8.1, HIGH, Tier 2)
   role          String    @default("customer")
   emailVerified DateTime?
   image         String?
   phone         String?
-  // BUG-012: SSN field stored in user model without encryption (CWE-312, CVSS 7.5, HIGH, Tier 1)
+  // BUG-012: [BP] SSN field stored in user model without encryption (CWE-312, CVSS 7.5, HIGH, Tier 1)
   taxId         String?
   resetToken    String?
-  // BUG-013: Reset token has no expiry field — tokens valid forever (CWE-640, CVSS 8.1, HIGH, Tier 2)
+  // BUG-013: [BP] Reset token has no expiry field — tokens valid forever (CWE-640, CVSS 8.1, HIGH, Tier 2)
   accounts      Account[]
   sessions      Session[]
   orders        Order[]
@@ -77,11 +77,11 @@ model Product {
   name        String
   slug        String     @unique
   description String
-  // BUG-014: Price stored as Float instead of Decimal — floating point arithmetic errors in financial calculations (CWE-681, CVSS 6.5, MEDIUM, Tier 2)
+  // BUG-014: [LOGIC] Price stored as Float instead of Decimal — floating point arithmetic errors in financial calculations (CWE-681, CVSS 6.5, MEDIUM, Tier 2)
   price       Float
   salePrice   Float?
   sku         String     @unique
-  // BUG-015: No unsigned constraint on stock — negative stock values possible (CWE-20, CVSS 4.3, BEST_PRACTICE, Tier 1)
+  // BUG-015: [LOGIC] No unsigned constraint on stock — negative stock values possible (CWE-20, CVSS 4.3, BEST_PRACTICE, Tier 1)
   stock       Int        @default(0)
   category    String
   imageUrl    String?
@@ -101,7 +101,7 @@ model CartItem {
   userId    String
   productId String
   quantity  Int      @default(1)
-  // BUG-016: No unique constraint on [userId, productId] — duplicate cart entries possible causing quantity bugs (CWE-799, CVSS 3.7, BEST_PRACTICE, Tier 2)
+  // BUG-016: [LOGIC] No unique constraint on [userId, productId] — duplicate cart entries possible causing quantity bugs (CWE-799, CVSS 3.7, BEST_PRACTICE, Tier 2)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id])
   createdAt DateTime @default(now())

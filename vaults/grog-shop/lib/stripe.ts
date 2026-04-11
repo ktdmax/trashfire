@@ -30,7 +30,7 @@ export async function createCheckoutSession(
   }[],
   metadata: Record<string, string> = {}
 ) {
-  // BUG-047: Price taken from client request instead of server-side product lookup — price manipulation (CWE-20, CVSS 8.1, CRITICAL, Tier 2)
+  // BUG-047: [LOGIC] Price taken from client request instead of server-side product lookup — price manipulation (CWE-20, CVSS 8.1, CRITICAL, Tier 2)
   const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(
     (item) => ({
       price_data: {
@@ -57,7 +57,7 @@ export async function createCheckoutSession(
       userId,
       ...metadata,
     },
-    // BUG-049: No idempotency key — duplicate payments possible on retry (CWE-799, CVSS 5.3, BEST_PRACTICE, Tier 2)
+    // BUG-049: [LOGIC] No idempotency key — duplicate payments possible on retry (CWE-799, CVSS 5.3, BEST_PRACTICE, Tier 2)
   });
 
   return session;
@@ -115,7 +115,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
     return;
   }
 
-  // BUG-051: Order status update has no duplicate check — webhook replay could process payment twice (CWE-799, CVSS 6.5, TRICKY, Tier 3)
+  // BUG-051: [LOGIC] Order status update has no duplicate check — webhook replay could process payment twice (CWE-799, CVSS 6.5, TRICKY, Tier 3)
   const order = await prisma.order.findFirst({
     where: {
       userId,
@@ -197,7 +197,7 @@ async function handleRefund(charge: Stripe.Charge) {
  */
 export async function createRefund(
   orderId: string,
-  // BUG-054: Refund amount taken from client parameter instead of original charge — allows refund > charge amount (CWE-20, CVSS 7.5, HIGH, Tier 2)
+  // BUG-054: [LOGIC] Refund amount taken from client parameter instead of original charge — allows refund > charge amount (CWE-20, CVSS 7.5, HIGH, Tier 2)
   amount?: number,
   reason?: string
 ) {
@@ -253,7 +253,7 @@ export async function getPaymentDetails(paymentIntentId: string) {
 /**
  * Calculate order totals with tax and shipping.
  */
-// BUG-056: Floating point arithmetic on currency values causes rounding errors (CWE-681, CVSS 4.3, BEST_PRACTICE, Tier 2)
+// BUG-056: [LOGIC] Floating point arithmetic on currency values causes rounding errors (CWE-681, CVSS 4.3, BEST_PRACTICE, Tier 2)
 export function calculateOrderTotals(
   items: { price: number; quantity: number }[],
   taxRate: number = 0.0875,
@@ -274,7 +274,7 @@ export function calculateOrderTotals(
     tax,
     shippingCost,
     discountAmount,
-    // BUG-057: Negative total possible if discount exceeds subtotal (CWE-20, CVSS 5.3, BEST_PRACTICE, Tier 2)
+    // BUG-057: [LOGIC] Negative total possible if discount exceeds subtotal (CWE-20, CVSS 5.3, BEST_PRACTICE, Tier 2)
     total,
   };
 }

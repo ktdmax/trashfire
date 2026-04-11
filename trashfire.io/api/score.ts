@@ -300,12 +300,12 @@ function scoreProject(manifest: ProjectManifest, review: ReviewerOutput) {
     byDifficultyTier[tier] = { count: tierIssues.length, matched: tierMatched, recall: tierIssues.length > 0 ? tierMatched / tierIssues.length : 0 };
   }
 
-  // Composite
-  const totalMaxPossible = manifest.issues.reduce((sum, i) => sum + 4.0 * DIFFICULTY_MULTIPLIERS[i.difficulty_tier], 0);
-  const fpPenalty = (pureFalsePositives * 1.0 + rhFlagged * 2.0) / totalMaxPossible;
-  let compositeScore = 0;
-  for (const cat of categories) compositeScore += CATEGORY_WEIGHTS[cat] * byCategory[cat].normalized_score;
-  compositeScore = Math.max(0, compositeScore - fpPenalty);
+  // Composite — severity-weighted, category-independent
+  const SEV_PTS: Record<string, number> = { CRITICAL: 5, HIGH: 4, MEDIUM: 3, LOW: 2 };
+  const maxPossiblePoints = manifest.issues.reduce((sum, i) => sum + (SEV_PTS[i.severity] ?? 2), 0);
+  const earnedPoints = manifest.issues.reduce((sum, issue, idx) => sum + (issueScores[idx].matched ? (SEV_PTS[issue.severity] ?? 2) : 0), 0);
+  const fpPenaltyPoints = pureFalsePositives * 1 + rhFlagged * 2;
+  const compositeScore = maxPossiblePoints > 0 ? Math.max(0, (earnedPoints - fpPenaltyPoints) / maxPossiblePoints) : 0;
 
   return {
     project: manifest.project,

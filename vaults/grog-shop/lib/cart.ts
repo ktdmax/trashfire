@@ -67,7 +67,7 @@ export async function addToCart(
   productId: string,
   quantity: number = 1
 ) {
-  // BUG-059: Negative quantity allowed — could result in negative cart total (CWE-20, CVSS 6.5, MEDIUM, Tier 2)
+  // BUG-059: [LOGIC] Negative quantity allowed — could result in negative cart total (CWE-20, CVSS 6.5, MEDIUM, Tier 2)
   const existingItem = await prisma.cartItem.findFirst({
     where: { userId, productId },
   });
@@ -145,7 +145,7 @@ export async function validateCart(userId: string) {
       errors.push(
         `${item.name}: only ${item.stock} available (requested ${item.quantity})`
       );
-      // BUG-062: Validation adjusts quantity silently instead of rejecting — user not properly informed of price change (CWE-20, CVSS 3.7, BEST_PRACTICE, Tier 2)
+      // BUG-062: [LOGIC] Validation adjusts quantity silently instead of rejecting — user not properly informed of price change (CWE-20, CVSS 3.7, BEST_PRACTICE, Tier 2)
       validItems.push({ ...item, quantity: item.stock });
       continue;
     }
@@ -203,7 +203,7 @@ export async function applyDiscount(
 
   if (coupon.discountType === "percentage") {
     discount = subtotal * (coupon.discountValue / 100);
-    // BUG-064: No maximum cap on percentage discount — 100% or higher discount possible (CWE-20, CVSS 5.3, MEDIUM, Tier 2)
+    // BUG-064: [LOGIC] No maximum cap on percentage discount — 100% or higher discount possible (CWE-20, CVSS 5.3, MEDIUM, Tier 2)
   } else {
     discount = coupon.discountValue;
   }

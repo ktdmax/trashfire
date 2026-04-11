@@ -8,7 +8,7 @@
  * Usage: npx tsx extract-manifest.ts <project-dir> [--out <path>]
  */
 
-import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative, extname } from "node:path";
 import { createHash } from "node:crypto";
 import type {
@@ -82,7 +82,9 @@ function findFiles(dir: string): string[] {
 //   -- BUG-0001: description (CWE-89, CVSS 9.8, CRITICAL, Tier 2)
 //   /* BUG-0001: description */
 // Also handles variants: BUG-001, BUG-0001, BUG-1
+// Supports optional explicit category tag: BUG-0016: [LOGIC] No unsigned constraint (CWE-...)
 const BUG_PATTERN = /BUG-0*(\d+)\s*:\s*(.+)/i;
+const EXPLICIT_CATEGORY_PATTERN = /^\[([A-Z]+)\]\s*/;
 const RH_PATTERN = /(?:RH|RED-HERRING)-0*(\d+)\s*:\s*(.+)/i;
 
 // Extract metadata from the description text
@@ -95,6 +97,7 @@ interface ParsedBug {
   id: string;
   numericId: number;
   description: string;
+  explicitCategory: IssueCategory | null; // from [CATEGORY] tag in comment
   cweId: string | null;
   cvssScore: number;
   severity: IssueSeverity;
@@ -278,18 +281,28 @@ function extractFromProject(projectDir: string, projectName: string): { bugs: Pa
         seenBugIds.add(numericId);
 
         const fullDesc = bugMatch[2].trim();
-        const cweMatch = fullDesc.match(CWE_PATTERN);
-        const cvssMatch = fullDesc.match(CVSS_PATTERN);
-        const sevMatch = fullDesc.match(SEVERITY_PATTERN);
-        const tierMatch = fullDesc.match(TIER_PATTERN);
+
+        // Check for explicit category tag: [SEC], [LOGIC], [PERF], [BP], [SMELL], [TRICKY]
+        const catTagMatch = fullDesc.match(EXPLICIT_CATEGORY_PATTERN);
+        const validCategories: Record<string, IssueCategory> = {
+          SEC: "SEC", LOGIC: "LOGIC", PERF: "PERF", BP: "BP", SMELL: "SMELL", TRICKY: "TRICKY",
+        };
+        const explicitCategory = catTagMatch ? (validCategories[catTagMatch[1]] ?? null) : null;
+        const descAfterTag = catTagMatch ? fullDesc.slice(catTagMatch[0].length) : fullDesc;
+
+        const cweMatch = descAfterTag.match(CWE_PATTERN);
+        const cvssMatch = descAfterTag.match(CVSS_PATTERN);
+        const sevMatch = descAfterTag.match(SEVERITY_PATTERN);
+        const tierMatch = descAfterTag.match(TIER_PATTERN);
 
         // Clean description: remove the parenthetical metadata
-        const cleanDesc = fullDesc.replace(/\s*\(.*\)\s*$/, "").trim();
+        const cleanDesc = descAfterTag.replace(/\s*\(.*\)\s*$/, "").trim();
 
         bugs.push({
           id: `BUG-${String(numericId).padStart(4, "0")}`,
           numericId,
           description: cleanDesc,
+          explicitCategory,
           cweId: cweMatch ? `CWE-${cweMatch[1]}` : null,
           cvssScore: cvssMatch ? parseFloat(cvssMatch[1]) : 5.0,
           severity: sevMatch ? parseSeverity(sevMatch[1]) : "MEDIUM",
@@ -332,7 +345,8 @@ function buildManifest(projectDir: string, projectName: string): ProjectManifest
 
   // Convert to Issue objects
   const issues: Issue[] = bugs.map((b) => {
-    const category = guessCategory(b.description, b.severity, b.tier);
+    // Explicit [CATEGORY] tag in BUG comment takes precedence over auto-classification
+    const category = b.explicitCategory ?? guessCategory(b.description, b.severity, b.tier);
     const secondaryCategory = category === "TRICKY" ? guessCategory(b.description, b.severity, 1 as DifficultyTier) : null;
     const trickyPattern = category === "TRICKY" ? guessTrickyPattern(b.description) : null;
 

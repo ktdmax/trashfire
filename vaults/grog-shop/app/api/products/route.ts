@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { [sort]: order as "asc" | "desc" },
       skip: (page - 1) * limit,
-      // BUG-075: No max limit — user can request limit=999999 to dump entire DB (CWE-770, CVSS 3.7, LOW, Tier 1)
+      // BUG-075: [PERF] No max limit — user can request limit=999999 to dump entire DB (CWE-770, CVSS 3.7, LOW, Tier 1)
       take: limit,
     });
 
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / limit),
     });
   } catch (error: any) {
-    // BUG-076: Verbose error response leaks stack trace and query details (CWE-209, CVSS 3.7, LOW, Tier 1)
+    // BUG-076: [BP] Verbose error response leaks stack trace and query details (CWE-209, CVSS 3.7, LOW, Tier 1)
     return NextResponse.json(
       { error: "Failed to fetch products", details: error.message, stack: error.stack },
       { status: 500 }

@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
 
-  // BUG-001: Missing security headers — no CSP, HSTS, X-Frame-Options (CWE-693, CVSS 5.3, MEDIUM, Tier 1)
+  // BUG-001: [BP] Missing security headers — no CSP, HSTS, X-Frame-Options (CWE-693, CVSS 5.3, MEDIUM, Tier 1)
   // Headers intentionally omitted
 
   images: {
@@ -19,7 +19,7 @@ const nextConfig = {
     ],
   },
 
-  // BUG-003: Source maps enabled in production leak source code (CWE-540, CVSS 5.3, MEDIUM, Tier 1)
+  // BUG-003: [BP] Source maps enabled in production leak source code (CWE-540, CVSS 5.3, MEDIUM, Tier 1)
   productionBrowserSourceMaps: true,
 
   // BUG-004: Webpack dev middleware exposed in production via config drift (CWE-489, CVSS 4.3, MEDIUM, Tier 3)
@@ -34,7 +34,7 @@ const nextConfig = {
     return config;
   },
 
-  // BUG-005: Experimental features enabled that bypass security checks (CWE-16, CVSS 3.7, LOW, Tier 1)
+  // BUG-005: [BP] Experimental features enabled that bypass security checks (CWE-16, CVSS 3.7, LOW, Tier 1)
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
@@ -79,7 +79,7 @@ const nextConfig = {
     BUILD_ID: process.env.BUILD_ID || "development",
   },
 
-  // BUG-008: Powered-by header not disabled — fingerprints framework (CWE-200, CVSS 2.6, LOW, Tier 1)
+  // BUG-008: [BP] Powered-by header not disabled — fingerprints framework (CWE-200, CVSS 2.6, LOW, Tier 1)
   poweredByHeader: true,
 };
 

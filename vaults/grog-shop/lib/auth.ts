@@ -102,7 +102,7 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
     error: "/auth/error",
   },
-  // BUG-036: Debug mode enabled unconditionally — leaks auth internals (CWE-215, CVSS 3.7, LOW, Tier 1)
+  // BUG-036: [BP] Debug mode enabled unconditionally — leaks auth internals (CWE-215, CVSS 3.7, LOW, Tier 1)
   debug: true,
   secret: JWT_SECRET,
 };

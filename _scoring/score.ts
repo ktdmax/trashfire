@@ -403,18 +403,27 @@ export function scoreProject(manifest: ProjectManifest, review: ReviewerOutput):
     };
   }
 
-  // Composite score
-  const totalMaxPossible = manifest.issues.reduce(
-    (sum, i) => sum + 4.0 * DIFFICULTY_MULTIPLIERS[i.difficulty_tier],
+  // Composite score — severity-weighted, category-independent
+  // CRITICAL=5, HIGH=4, MEDIUM=3, LOW=2
+  const SEVERITY_POINTS: Record<IssueSeverity, number> = { CRITICAL: 5, HIGH: 4, MEDIUM: 3, LOW: 2 };
+
+  const maxPossiblePoints = manifest.issues.reduce(
+    (sum, i) => sum + SEVERITY_POINTS[i.severity],
     0
   );
-  const fpPenalty = (pureFalsePositives * 1.0 + rhFlagged * 2.0) / totalMaxPossible;
 
-  let compositeScore = 0;
-  for (const cat of categories) {
-    compositeScore += CATEGORY_WEIGHTS[cat] * byCategory[cat].normalized_score;
-  }
-  compositeScore = Math.max(0, compositeScore - fpPenalty);
+  const earnedPoints = manifest.issues.reduce((sum, issue, idx) => {
+    const score = issueScores[idx];
+    return sum + (score.matched ? SEVERITY_POINTS[issue.severity] : 0);
+  }, 0);
+
+  // FP penalty: -1 per false positive, -2 per flagged red herring
+  const fpPenaltyPoints = pureFalsePositives * 1 + rhFlagged * 2;
+  const fpPenalty = maxPossiblePoints > 0 ? fpPenaltyPoints / maxPossiblePoints : 0;
+
+  const compositeScore = maxPossiblePoints > 0
+    ? Math.max(0, (earnedPoints - fpPenaltyPoints) / maxPossiblePoints)
+    : 0;
 
   return {
     project: manifest.project,
